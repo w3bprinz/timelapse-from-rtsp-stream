@@ -22,8 +22,9 @@ RUN chmod +x /app/screenshot_script.sh
 
 # Kopiere und konfiguriere den Cron-Job
 COPY crontab /etc/cron.d/timelapse_cron
-RUN chmod 0644 /etc/cron.d/timelapse_cron
-RUN crontab /etc/cron.d/timelapse_cron
+RUN chmod 0644 /etc/cron.d/timelapse_cron && \
+    echo "" >> /etc/cron.d/timelapse_cron && \
+    crontab /etc/cron.d/timelapse_cron
 
 # Starte den Cron-Dienst
 CMD ["cron", "-f"]
