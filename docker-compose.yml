@@ -1,0 +1,24 @@
+version: "3"
+services:
+  timelapse-generator:
+    image: ghcr.io/${GITHUB_REPOSITORY:-your-username/timelapse-from-rtsp-stream}:latest
+    container_name: timelapse-generator
+    restart: unless-stopped
+    environment:
+      - RTSP_URL=rtsp://username:password@ip:port/stream
+      - DISCORD_CHANNEL_ID=your_channel_id
+      - DISCORD_BOT_TOKEN=your_bot_token
+      - SCREENSHOT_INTERVAL=300
+      - SCREENSHOT_DIR=/app/screenshots
+      - TIMELAPSE_DIR=/app/timelapse
+      - MAX_VIDEO_SIZE_MB=10
+    volumes:
+      - /mnt/user/appdata/timelapse/config:/app/config:rw
+      - /mnt/user/appdata/timelapse/screenshots:/app/screenshots:rw
+      - /mnt/user/appdata/timelapse/timelapse:/app/timelapse:rw
+      - /mnt/user/appdata/timelapse/.env:/app/.env:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

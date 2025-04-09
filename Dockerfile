@@ -10,12 +10,12 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Erstelle notwendige Verzeichnisse
-RUN mkdir -p /app/screenshots /app/timelapse
+RUN mkdir -p /app/screenshots /app/timelapse /app/config
 
 # Kopiere die Skripte in das Arbeitsverzeichnis
 COPY screenshot_script.sh /app/screenshot_script.sh
 COPY post_to_discord.py /app/post_to_discord.py
-COPY .env.example /app/.env.example
+COPY .env.example /app/.env
 
 # Setze Berechtigungen für das Skript
 RUN chmod +x /app/screenshot_script.sh
