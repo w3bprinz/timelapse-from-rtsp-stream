@@ -10,7 +10,7 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Erstelle notwendige Verzeichnisse
-RUN mkdir -p /app/screenshots /app/timelapse /app/config
+RUN mkdir -p /app/screenshots /app/timelapse
 
 # Kopiere die Skripte in das Arbeitsverzeichnis
 COPY screenshot_script.sh /app/screenshot_script.sh

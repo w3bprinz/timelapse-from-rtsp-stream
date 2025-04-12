@@ -13,7 +13,6 @@ services:
       - TIMELAPSE_DIR=/app/timelapse
       - MAX_VIDEO_SIZE_MB=10
     volumes:
-      - /mnt/user/appdata/timelapse/config:/app/config:rw
       - /mnt/user/appdata/timelapse/screenshots:/app/screenshots:rw
       - /mnt/user/appdata/timelapse/timelapse:/app/timelapse:rw
       - /mnt/user/appdata/timelapse/.env:/app/.env:ro
