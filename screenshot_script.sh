@@ -17,29 +17,27 @@ create_screenshot() {
     for i in {1..3}; do
         echo "Versuch $i: Erstelle Screenshot..."
         
-        # Erste Version mit höherer Qualität und Pufferung
+        # Warte 1 Sekunde, um den Stream zu stabilisieren
+        sleep 1
+        
+        # Erstelle Screenshot mit verbesserten Parametern
         ffmpeg -y \
             -rtsp_transport tcp \
-            -timeout 5000000 \
+            -analyzeduration 10000000 \
+            -probesize 5000000 \
             -i "$RTSP_URL" \
             -frames:v 1 \
-            -vf "format=yuv420p" \
-            -q:v 2 \
-            -update 1 "$temp_file"
+            -vf "format=rgb24,setpts=PTS-STARTPTS" \
+            -compression_level 9 \
+            -update 1 \
+            "$temp_file"
         
-        # Überprüfe die Bildqualität
-        if [ -f "$temp_file" ]; then
-            # Konvertiere zu PNG mit höherer Qualität
-            ffmpeg -y -i "$temp_file" \
-                -vf "format=rgb24" \
-                -compression_level 9 \
-                "$output_file"
-            
-            # Lösche temporäre Datei
-            rm -f "$temp_file"
-            
-            # Überprüfe, ob das Bild gültig ist
-            if [ -s "$output_file" ]; then
+        # Überprüfe, ob das Bild gültig ist
+        if [ -f "$temp_file" ] && [ -s "$temp_file" ]; then
+            # Überprüfe die Bildqualität
+            local image_info=$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "$temp_file")
+            if [ ! -z "$image_info" ]; then
+                mv "$temp_file" "$output_file"
                 echo "Screenshot erfolgreich erstellt: $output_file"
                 return 0
             fi
@@ -49,6 +47,8 @@ create_screenshot() {
         sleep 2
     done
     
+    # Lösche temporäre Datei, falls vorhanden
+    rm -f "$temp_file"
     echo "Fehler: Konnte keinen gültigen Screenshot erstellen"
     return 1
 }
