@@ -20,7 +20,7 @@ create_screenshot() {
         # Erste Version mit höherer Qualität und Pufferung
         ffmpeg -y \
             -rtsp_transport tcp \
-            -stimeout 5000000 \
+            -timeout 5000000 \
             -i "$RTSP_URL" \
             -frames:v 1 \
             -vf "format=yuv420p" \
