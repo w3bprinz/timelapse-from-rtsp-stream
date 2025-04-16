@@ -2,9 +2,13 @@ FROM python:3.9-slim
 
 # Installiere ffmpeg und andere Abhängigkeiten
 RUN apt-get update && \
-    apt-get install -y ffmpeg cron && \
+    apt-get install -y ffmpeg cron tzdata && \
     pip install discord.py pytz python-dotenv && \
     rm -rf /var/lib/apt/lists/*
+
+# Setze die Zeitzone auf Berlin
+ENV TZ=Europe/Berlin
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Erstelle Arbeitsverzeichnis
 WORKDIR /app
