@@ -70,23 +70,54 @@ is_special_time() {
 create_screenshot() {
     local timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
     local output_file="/app/screenshots/screenshot_${timestamp}.png"
+    local temp_file="/app/screenshots/temp_${timestamp}.png"
     
-    # Erstelle Screenshot mit ffmpeg
-    ffmpeg -y -i "$RTSP_URL" -frames:v 1 -update 1 "$output_file" 2>/dev/null
+    # Versuche bis zu 3 Mal, ein gutes Bild zu bekommen
+    for i in {1..3}; do
+        echo "Versuch $i: Erstelle Screenshot..."
+        
+        # Warte 1 Sekunde, um den Stream zu stabilisieren
+        sleep 1
+        
+        # Erstelle Screenshot mit verbesserten Parametern
+        ffmpeg -y \
+            -rtsp_transport tcp \
+            -analyzeduration 10000000 \
+            -probesize 5000000 \
+            -i "$RTSP_URL" \
+            -frames:v 1 \
+            -vf "format=rgb24,setpts=PTS-STARTPTS" \
+            -compression_level 9 \
+            -update 1 \
+            "$temp_file"
+        
+        # Überprüfe, ob das Bild gültig ist
+        if [ -f "$temp_file" ] && [ -s "$temp_file" ]; then
+            # Überprüfe die Bildqualität
+            local image_info=$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "$temp_file")
+            if [ ! -z "$image_info" ]; then
+                mv "$temp_file" "$output_file"
+                echo "Screenshot erfolgreich erstellt: $output_file"
+                
+                # Prüfe, ob es sich um eine spezielle Uhrzeit handelt (8:00 oder 20:00)
+                if is_special_time; then
+                    local current_time=$(date +"%Y-%m-%d %H:%M:%S")
+                    local message="Daily Weed Picture: $current_time"
+                    post_to_discord "$output_file" "$message" "$DISCORD_DAILY_CHANNEL_ID"
+                fi
+                
+                return 0
+            fi
+        fi
+        
+        # Warte 2 Sekunden vor dem nächsten Versuch
+        sleep 2
+    done
     
-    if [ ! -f "$output_file" ] || [ ! -s "$output_file" ]; then
-        echo "Fehler beim Erstellen des Screenshots"
-        return 1
-    fi
-    
-    # Prüfe, ob es sich um eine spezielle Uhrzeit handelt (8:00 oder 20:00)
-    if is_special_time; then
-        local current_time=$(date +"%Y-%m-%d %H:%M:%S")
-        local message="Daily Weed Picture: $current_time"
-        post_to_discord "$output_file" "$message" "$DISCORD_DAILY_CHANNEL_ID"
-    fi
-    
-    return 0
+    # Lösche temporäre Datei, falls vorhanden
+    rm -f "$temp_file"
+    echo "Fehler: Konnte keinen gültigen Screenshot erstellen"
+    return 1
 }
 
 # Erstelle ein Timelapse-Video
