@@ -7,6 +7,30 @@ source /app/.env
 mkdir -p "$SCREENSHOT_DIR"
 mkdir -p "$TIMELAPSE_DIR"
 
+# Funktion zum Posten eines Screenshots in Discord
+post_to_discord() {
+    local file_path=$1
+    local channel_id=$2
+    local message=$3
+    
+    # Erstelle temporäre .env Datei für den Discord-Bot
+    local temp_env="/tmp/discord_env_$(date +%s).env"
+    echo "DISCORD_CHANNEL_ID=$channel_id" > "$temp_env"
+    echo "DISCORD_BOT_TOKEN=$DISCORD_BOT_TOKEN" >> "$temp_env"
+    
+    # Führe das Discord-Script mit der temporären .env aus
+    DISCORD_ENV="$temp_env" python3 /app/post_to_discord.py "$file_path" "$message"
+    
+    # Lösche die temporäre .env Datei
+    rm -f "$temp_env"
+}
+
+# Funktion zum Überprüfen, ob es sich um einen speziellen Zeitpunkt handelt
+is_special_time() {
+    local current_time=$(date +"%H:%M")
+    [ "$current_time" = "08:00" ] || [ "$current_time" = "20:00" ]
+}
+
 # Erstelle einen Screenshot
 create_screenshot() {
     local timestamp=$(date +%Y%m%d_%H%M%S)
@@ -39,6 +63,14 @@ create_screenshot() {
             if [ ! -z "$image_info" ]; then
                 mv "$temp_file" "$output_file"
                 echo "Screenshot erfolgreich erstellt: $output_file"
+                
+                # Überprüfe, ob es sich um einen speziellen Zeitpunkt handelt
+                if is_special_time; then
+                    local current_time=$(date +"%Y-%m-%d %H:%M:%S")
+                    local message="Daily Weed Picture: $current_time"
+                    post_to_discord "$output_file" "$DISCORD_DAILY_CHANNEL_ID" "$message"
+                fi
+                
                 return 0
             fi
         fi
@@ -74,7 +106,7 @@ create_timelapse() {
     local size_mb=$(du -m "$output_file" | cut -f1)
     if [ "$size_mb" -le "$MAX_VIDEO_SIZE_MB" ]; then
         # Sende das Video an Discord
-        python3 /app/post_to_discord.py "$output_file"
+        post_to_discord "$output_file" "$DISCORD_CHANNEL_ID" "Timelapse Video vom $(date +"%Y-%m-%d")"
     else
         echo "Video ist zu groß ($size_mb MB) und wird nicht gesendet"
     fi

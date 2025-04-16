@@ -8,7 +8,8 @@ import sys
 from dotenv import load_dotenv
 
 # Lade Umgebungsvariablen
-load_dotenv('/app/.env')
+env_file = os.getenv('DISCORD_ENV', '/app/.env')
+load_dotenv(env_file)
 
 # Discord Konfiguration aus Umgebungsvariablen
 CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID'))
@@ -32,16 +33,19 @@ async def on_ready():
         await bot.close()
         return
 
-    # Erstelle den Nachrichtentext mit dem aktuellen Datum
-    tz = pytz.timezone('Europe/Berlin')
-    now = datetime.now(tz)
-    date_string = now.strftime('%Y-%m-%d %H:%M:%S %Z')
-    
-    # Bestimme den Nachrichtentext basierend auf der Dateiendung
-    if file_path.endswith('.mp4'):
-        message_content = f'Timelapse Video vom {date_string}'
-    else:
-        message_content = f'Screenshot vom {date_string}'
+    # Hole die benutzerdefinierte Nachricht, falls vorhanden
+    message_content = sys.argv[2] if len(sys.argv) > 2 else None
+    if not message_content:
+        # Erstelle den Nachrichtentext mit dem aktuellen Datum
+        tz = pytz.timezone('Europe/Berlin')
+        now = datetime.now(tz)
+        date_string = now.strftime('%Y-%m-%d %H:%M:%S %Z')
+        
+        # Bestimme den Nachrichtentext basierend auf der Dateiendung
+        if file_path.endswith('.mp4'):
+            message_content = f'Timelapse Video vom {date_string}'
+        else:
+            message_content = f'Screenshot vom {date_string}'
 
     channel = bot.get_channel(CHANNEL_ID)
     if channel is None:
