@@ -11,52 +11,49 @@ from dotenv import load_dotenv
 env_file = os.getenv('DISCORD_ENV', '/app/.env')
 load_dotenv(env_file)
 
-# Discord Konfiguration aus Umgebungsvariablen
-CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID'))
-BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
+# Hole die Umgebungsvariablen
+DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
+DISCORD_CHANNEL_ID = os.getenv('DISCORD_CHANNEL_ID')
 
-# Erstelle die intents und aktiviere den Nachrichteninhalt-Intent
-intents = discord.Intents.default()
-intents.message_content = True
+# Überprüfe, ob alle erforderlichen Umgebungsvariablen vorhanden sind
+if not DISCORD_BOT_TOKEN or not DISCORD_CHANNEL_ID:
+    print("Fehler: DISCORD_BOT_TOKEN oder DISCORD_CHANNEL_ID nicht gesetzt")
+    sys.exit(1)
 
-# Erstelle den Bot mit den intents
-bot = commands.Bot(command_prefix='!', intents=intents)
+# Hole den Dateipfad und die Nachricht aus den Kommandozeilenargumenten
+if len(sys.argv) < 2:
+    print("Fehler: Kein Dateipfad angegeben")
+    sys.exit(1)
 
-@bot.event
+file_path = sys.argv[1]
+message = sys.argv[2] if len(sys.argv) > 2 else f"Screenshot vom {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+# Überprüfe, ob die Datei existiert
+if not os.path.exists(file_path):
+    print(f"Fehler: Datei {file_path} existiert nicht")
+    sys.exit(1)
+
+# Erstelle den Discord Client
+client = discord.Client(intents=discord.Intents.default())
+
+@client.event
 async def on_ready():
-    print(f'Logged in as {bot.user.name}')
-    
-    # Hole die Datei, die gesendet werden soll
-    file_path = sys.argv[1] if len(sys.argv) > 1 else None
-    if not file_path or not os.path.exists(file_path):
-        print(f'Datei nicht gefunden: {file_path}')
-        await bot.close()
-        return
+    try:
+        # Hole den Kanal
+        channel = client.get_channel(int(DISCORD_CHANNEL_ID))
+        if not channel:
+            print(f"Fehler: Kanal mit ID {DISCORD_CHANNEL_ID} nicht gefunden")
+            await client.close()
+            return
 
-    # Hole die benutzerdefinierte Nachricht, falls vorhanden
-    message_content = sys.argv[2] if len(sys.argv) > 2 else None
-    if not message_content:
-        # Erstelle den Nachrichtentext mit dem aktuellen Datum
-        tz = pytz.timezone('Europe/Berlin')
-        now = datetime.now(tz)
-        date_string = now.strftime('%Y-%m-%d %H:%M:%S %Z')
-        
-        # Bestimme den Nachrichtentext basierend auf der Dateiendung
-        if file_path.endswith('.mp4'):
-            message_content = f'Timelapse Video vom {date_string}'
-        else:
-            message_content = f'Screenshot vom {date_string}'
+        # Sende die Nachricht und die Datei
+        with open(file_path, 'rb') as f:
+            await channel.send(content=message, file=discord.File(f))
+        print(f"Erfolgreich an Discord gesendet: {file_path}")
+    except Exception as e:
+        print(f"Fehler beim Senden an Discord: {str(e)}")
+    finally:
+        await client.close()
 
-    channel = bot.get_channel(CHANNEL_ID)
-    if channel is None:
-        print(f'Channel mit ID {CHANNEL_ID} nicht gefunden.')
-    else:
-        try:
-            await channel.send(content=message_content, file=discord.File(file_path))
-            print('Nachricht erfolgreich gesendet.')
-        except discord.errors.Forbidden as e:
-            print(f'Fehler beim Senden der Nachricht: {e}')
-    
-    await bot.close()
-
-bot.run(BOT_TOKEN)
+# Starte den Client
+client.run(DISCORD_BOT_TOKEN)
