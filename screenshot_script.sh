@@ -7,11 +7,48 @@ source /app/.env
 mkdir -p "$SCREENSHOT_DIR"
 mkdir -p "$TIMELAPSE_DIR"
 
+# Funktion zum Verkleinern eines Bildes
+resize_image() {
+    local input_file="$1"
+    local max_size_mb=10
+    local size_mb=$(du -m "$input_file" | cut -f1)
+    
+    if [ "$size_mb" -gt "$max_size_mb" ]; then
+        echo "Bild ist zu groß ($size_mb MB), verkleinere es..."
+        local temp_file="${input_file%.*}_resized.${input_file##*.}"
+        
+        # Verkleinere das Bild mit ffmpeg
+        ffmpeg -y -i "$input_file" \
+            -vf "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease" \
+            -compression_level 9 \
+            "$temp_file"
+        
+        # Überprüfe, ob die Verkleinerung erfolgreich war
+        if [ -f "$temp_file" ] && [ -s "$temp_file" ]; then
+            mv "$temp_file" "$input_file"
+            echo "Bild erfolgreich verkleinert"
+        else
+            echo "Fehler beim Verkleinern des Bildes"
+            return 1
+        fi
+    fi
+    return 0
+}
+
 # Funktion zum Posten in Discord
 post_to_discord() {
     local file_path="$1"
     local message="$2"
     local channel_id="$3"
+    
+    # Verkleinere das Bild, falls nötig
+    if [[ "$file_path" == *.png ]] || [[ "$file_path" == *.jpg ]] || [[ "$file_path" == *.jpeg ]]; then
+        resize_image "$file_path"
+        if [ $? -ne 0 ]; then
+            echo "Fehler beim Verkleinern des Bildes"
+            return 1
+        fi
+    fi
     
     # Führe das Discord-Script aus
     DISCORD_CHANNEL_ID="$channel_id" python3 /app/post_to_discord.py "$file_path" "$message"
