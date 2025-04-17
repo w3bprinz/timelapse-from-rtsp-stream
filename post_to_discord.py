@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
+import sys
+import os
+
+# Füge den Python-Pfad hinzu
+sys.path.append('/usr/local/lib/python3.9/site-packages')
+
 import discord
 from discord.ext import commands
 from datetime import datetime
 import pytz
-import os
-import sys
 from dotenv import load_dotenv
 
 # Lade Umgebungsvariablen

@@ -10,7 +10,7 @@ mkdir -p "$TIMELAPSE_DIR"
 # Funktion zum Verkleinern eines Bildes
 resize_image() {
     local input_file="$1"
-    local max_size_mb=10
+    local max_size_mb=8  # Reduziert auf 8MB für mehr Sicherheit
     local size_mb=$(du -m "$input_file" | cut -f1)
     
     if [ "$size_mb" -gt "$max_size_mb" ]; then
@@ -19,8 +19,9 @@ resize_image() {
         
         # Verkleinere das Bild mit ffmpeg
         ffmpeg -y -i "$input_file" \
-            -vf "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease" \
+            -vf "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease" \
             -compression_level 9 \
+            -q:v 2 \
             "$temp_file"
         
         # Überprüfe, ob die Verkleinerung erfolgreich war
@@ -50,8 +51,8 @@ post_to_discord() {
         fi
     fi
     
-    # Führe das Discord-Script aus
-    DISCORD_CHANNEL_ID="$channel_id" python3 /app/post_to_discord.py "$file_path" "$message"
+    # Führe das Discord-Script mit vollem Python-Pfad aus
+    PYTHONPATH=/app DISCORD_CHANNEL_ID="$channel_id" /usr/local/bin/python3 /app/post_to_discord.py "$file_path" "$message"
     
     if [ $? -ne 0 ]; then
         echo "Fehler beim Posten in Discord"
@@ -63,7 +64,7 @@ post_to_discord() {
 # Funktion zum Überprüfen, ob es sich um einen speziellen Zeitpunkt handelt
 is_special_time() {
     local current_time=$(date +"%H:%M")
-    [ "$current_time" = "08:00" ] || [ "$current_time" = "20:00" ]
+    [ "$current_time" = "09:10" ] || [ "$current_time" = "20:00" ]
 }
 
 # Funktion zum Erstellen eines Screenshots
