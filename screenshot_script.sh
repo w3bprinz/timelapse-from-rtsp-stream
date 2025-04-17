@@ -10,7 +10,7 @@ mkdir -p "$TIMELAPSE_DIR"
 # Funktion zum Verkleinern eines Bildes
 resize_image() {
     local input_file="$1"
-    local max_size_mb=8  # Reduziert auf 8MB für mehr Sicherheit
+    local max_size_mb=10
     local size_mb=$(du -m "$input_file" | cut -f1)
     
     if [ "$size_mb" -gt "$max_size_mb" ]; then
@@ -19,9 +19,8 @@ resize_image() {
         
         # Verkleinere das Bild mit ffmpeg
         ffmpeg -y -i "$input_file" \
-            -vf "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease" \
+            -vf "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease" \
             -compression_level 9 \
-            -q:v 2 \
             "$temp_file"
         
         # Überprüfe, ob die Verkleinerung erfolgreich war
