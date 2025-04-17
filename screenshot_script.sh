@@ -19,6 +19,8 @@ resize_image() {
         
         # Verkleinere das Bild mit ffmpeg
         ffmpeg -y -i "$input_file" \
+            -frames:v 1 \
+            -update 1 \
             -vf "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease" \
             -compression_level 9 \
             "$temp_file"
@@ -63,7 +65,7 @@ post_to_discord() {
 # Funktion zum Überprüfen, ob es sich um einen speziellen Zeitpunkt handelt
 is_special_time() {
     local current_time=$(date +"%H:%M")
-    [ "$current_time" = "09:10" ] || [ "$current_time" = "20:00" ]
+    [ "$current_time" = "09:00" ] || [ "$current_time" = "21:00" ]
 }
 
 # Funktion zum Erstellen eines Screenshots
