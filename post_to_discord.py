@@ -5,6 +5,7 @@ import asyncio
 from datetime import datetime, time
 import pytz
 from dotenv import load_dotenv
+import subprocess
 
 # Füge den Python-Pfad hinzu
 sys.path.append('/usr/local/lib/python3.9/site-packages')
@@ -41,6 +42,33 @@ if not DISCORD_DAILY_CHANNEL_ID:
 print(f"Bot Token: {'*' * len(DISCORD_BOT_TOKEN)}")
 print(f"Channel ID: {DISCORD_CHANNEL_ID}")
 print(f"Daily Channel ID: {DISCORD_DAILY_CHANNEL_ID}")
+
+def resize_image(input_file):
+    """Verkleinert ein Bild, falls es größer als 10MB ist"""
+    max_size_mb = 10
+    size_mb = int(subprocess.check_output(['du', '-m', input_file]).split()[0].decode('utf-8'))
+    
+    if size_mb > max_size_mb:
+        print(f"Bild ist zu groß ({size_mb} MB), verkleinere es...")
+        temp_file = f"{input_file}.resized"
+        
+        # Verkleinere das Bild mit ffmpeg
+        subprocess.run([
+            'ffmpeg', '-y',
+            '-i', input_file,
+            '-frames:v', '1',
+            '-update', '1',
+            '-vf', "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease",
+            '-compression_level', '9',
+            temp_file
+        ], check=True)
+        
+        if os.path.exists(temp_file) and os.path.getsize(temp_file) > 0:
+            return temp_file
+        else:
+            print("Fehler beim Verkleinern des Bildes")
+            return None
+    return input_file
 
 # Erstelle den Bot mit den intents
 intents = discord.Intents.default()
@@ -85,12 +113,22 @@ async def check_daily_post():
             current_time_str = datetime.now(berlin_tz).strftime("%Y-%m-%d %H:%M:%S")
             message = f"Daily Weed Picture: {current_time_str}"
             
+            # Verkleinere das Bild, falls nötig
+            resized_file = resize_image(latest_file)
+            if not resized_file:
+                print("Fehler beim Verkleinern des Bildes für Daily Post")
+                return
+            
             # Sende das Bild in den Daily Channel
             channel = bot.get_channel(int(DISCORD_DAILY_CHANNEL_ID))
             if channel:
-                with open(latest_file, 'rb') as f:
+                with open(resized_file, 'rb') as f:
                     await channel.send(content=message, file=discord.File(f))
-                print(f"Daily Post erfolgreich gesendet: {latest_file}")
+                print(f"Daily Post erfolgreich gesendet: {resized_file}")
+                
+                # Lösche die temporäre Datei, falls eine erstellt wurde
+                if resized_file != latest_file:
+                    os.remove(resized_file)
         except Exception as e:
             print(f"Fehler beim Senden des Daily Posts: {str(e)}")
 
@@ -107,10 +145,20 @@ async def last_image(ctx):
 
         latest_file = max(list_of_files, key=os.path.getctime)
         
+        # Verkleinere das Bild, falls nötig
+        resized_file = resize_image(latest_file)
+        if not resized_file:
+            await ctx.send("Fehler beim Verkleinern des Bildes.")
+            return
+        
         # Sende das Bild
-        with open(latest_file, 'rb') as f:
+        with open(resized_file, 'rb') as f:
             await ctx.send(file=discord.File(f))
-        print(f"Letztes Bild erfolgreich an Discord gesendet: {latest_file}")
+        print(f"Letztes Bild erfolgreich an Discord gesendet: {resized_file}")
+        
+        # Lösche die temporäre Datei, falls eine erstellt wurde
+        if resized_file != latest_file:
+            os.remove(resized_file)
     except Exception as e:
         await ctx.send(f"Fehler beim Senden des Bildes: {str(e)}")
         print(f"Fehler beim Senden des letzten Bildes: {str(e)}")
@@ -133,6 +181,12 @@ if __name__ == "__main__":
             print(f"Fehler: Datei {file_path} existiert nicht")
             sys.exit(1)
 
+        # Verkleinere das Bild, falls nötig
+        resized_file = resize_image(file_path)
+        if not resized_file:
+            print("Fehler beim Verkleinern des Bildes")
+            sys.exit(1)
+
         # Erstelle einen temporären Client für den direkten Aufruf
         client = discord.Client(intents=discord.Intents.default())
 
@@ -145,9 +199,13 @@ if __name__ == "__main__":
                     await client.close()
                     return
 
-                with open(file_path, 'rb') as f:
+                with open(resized_file, 'rb') as f:
                     await channel.send(content=message, file=discord.File(f))
-                print(f"Erfolgreich an Discord gesendet: {file_path}")
+                print(f"Erfolgreich an Discord gesendet: {resized_file}")
+                
+                # Lösche die temporäre Datei, falls eine erstellt wurde
+                if resized_file != file_path:
+                    os.remove(resized_file)
             except Exception as e:
                 print(f"Fehler beim Senden an Discord: {str(e)}")
             finally:
