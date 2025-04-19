@@ -28,6 +28,7 @@ RUN chmod +x /app/screenshot_script.sh
 COPY crontab /etc/cron.d/timelapse_cron
 RUN chmod 0644 /etc/cron.d/timelapse_cron && \
     echo "" >> /etc/cron.d/timelapse_cron && \
+    echo "@reboot /usr/local/bin/python3 /app/post_to_discord.py >> /var/log/discord_bot.log 2>&1" >> /etc/cron.d/timelapse_cron && \
     crontab /etc/cron.d/timelapse_cron
 
 # Starte den Cron-Dienst
