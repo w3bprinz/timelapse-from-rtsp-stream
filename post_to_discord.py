@@ -4,6 +4,7 @@ import os
 import asyncio
 from datetime import datetime, time
 import pytz
+from dotenv import load_dotenv
 
 # Füge den Python-Pfad hinzu
 sys.path.append('/usr/local/lib/python3.9/site-packages')
@@ -14,14 +15,32 @@ import glob
 import os
 
 # Lade Umgebungsvariablen
+env_file = '/app/.env'
+if not os.path.exists(env_file):
+    print(f"Fehler: .env Datei nicht gefunden unter {env_file}")
+    sys.exit(1)
+
+load_dotenv(env_file)
+
+# Hole die Umgebungsvariablen
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 DISCORD_CHANNEL_ID = os.getenv('DISCORD_CHANNEL_ID')
 DISCORD_DAILY_CHANNEL_ID = os.getenv('DISCORD_DAILY_CHANNEL_ID')
 
 # Überprüfe, ob alle erforderlichen Umgebungsvariablen vorhanden sind
-if not DISCORD_BOT_TOKEN or not DISCORD_CHANNEL_ID or not DISCORD_DAILY_CHANNEL_ID:
-    print("Fehler: Discord Umgebungsvariablen nicht vollständig gesetzt")
+if not DISCORD_BOT_TOKEN:
+    print("Fehler: DISCORD_BOT_TOKEN nicht gesetzt")
     sys.exit(1)
+if not DISCORD_CHANNEL_ID:
+    print("Fehler: DISCORD_CHANNEL_ID nicht gesetzt")
+    sys.exit(1)
+if not DISCORD_DAILY_CHANNEL_ID:
+    print("Fehler: DISCORD_DAILY_CHANNEL_ID nicht gesetzt")
+    sys.exit(1)
+
+print(f"Bot Token: {'*' * len(DISCORD_BOT_TOKEN)}")
+print(f"Channel ID: {DISCORD_CHANNEL_ID}")
+print(f"Daily Channel ID: {DISCORD_DAILY_CHANNEL_ID}")
 
 # Erstelle den Bot mit den intents
 intents = discord.Intents.default()
