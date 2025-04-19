@@ -50,7 +50,9 @@ def resize_image(input_file):
     
     if size_mb > max_size_mb:
         print(f"Bild ist zu groß ({size_mb} MB), verkleinere es...")
-        temp_file = f"{input_file}.resized"
+        # Behalte die ursprüngliche Dateiendung bei
+        file_ext = os.path.splitext(input_file)[1]
+        temp_file = f"{os.path.splitext(input_file)[0]}_resized{file_ext}"
         
         # Verkleinere das Bild mit ffmpeg
         subprocess.run([
