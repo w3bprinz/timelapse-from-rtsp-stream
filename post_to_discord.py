@@ -13,7 +13,6 @@ sys.path.append('/usr/local/lib/python3.9/site-packages')
 import discord
 from discord.ext import commands, tasks
 import glob
-import os
 
 # Lade Umgebungsvariablen
 env_file = '/app/.env'
@@ -42,35 +41,6 @@ if not DISCORD_DAILY_CHANNEL_ID:
 print(f"Bot Token: {'*' * len(DISCORD_BOT_TOKEN)}")
 print(f"Channel ID: {DISCORD_CHANNEL_ID}")
 print(f"Daily Channel ID: {DISCORD_DAILY_CHANNEL_ID}")
-
-def resize_image(input_file):
-    """Verkleinert ein Bild, falls es größer als 10MB ist"""
-    max_size_mb = 10
-    size_mb = int(subprocess.check_output(['du', '-m', input_file]).split()[0].decode('utf-8'))
-    
-    if size_mb > max_size_mb:
-        print(f"Bild ist zu groß ({size_mb} MB), verkleinere es...")
-        # Behalte die ursprüngliche Dateiendung bei
-        file_ext = os.path.splitext(input_file)[1]
-        temp_file = f"{os.path.splitext(input_file)[0]}_resized{file_ext}"
-        
-        # Verkleinere das Bild mit ffmpeg
-        subprocess.run([
-            'ffmpeg', '-y',
-            '-i', input_file,
-            '-frames:v', '1',
-            '-update', '1',
-            '-vf', "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease",
-            '-compression_level', '9',
-            temp_file
-        ], check=True)
-        
-        if os.path.exists(temp_file) and os.path.getsize(temp_file) > 0:
-            return temp_file
-        else:
-            print("Fehler beim Verkleinern des Bildes")
-            return None
-    return input_file
 
 # Erstelle den Bot mit den intents
 intents = discord.Intents.default()
@@ -134,40 +104,44 @@ async def check_daily_post():
         except Exception as e:
             print(f"Fehler beim Senden des Daily Posts: {str(e)}")
 
-@bot.command(name='last')
-async def last_image(ctx):
-    """Sendet das letzte aufgenommene Bild in den Kanal"""
-    try:
-        # Finde das neueste Bild im Screenshot-Verzeichnis
-        screenshot_dir = "/app/screenshots"
-        list_of_files = glob.glob(f"{screenshot_dir}/screenshot_*.png")
-        if not list_of_files:
-            await ctx.send("Keine Screenshots gefunden.")
-            return
-
-        latest_file = max(list_of_files, key=os.path.getctime)
+def resize_image(input_file):
+    """Verkleinert ein Bild, falls es größer als 10MB ist"""
+    max_size_mb = 10
+    size_mb = int(subprocess.check_output(['du', '-m', input_file]).split()[0].decode('utf-8'))
+    
+    if size_mb > max_size_mb:
+        print(f"Bild ist zu groß ({size_mb} MB), verkleinere es...")
+        # Behalte die ursprüngliche Dateiendung bei
+        file_ext = os.path.splitext(input_file)[1]
+        temp_file = f"{os.path.splitext(input_file)[0]}_resized{file_ext}"
         
-        # Verkleinere das Bild, falls nötig
-        resized_file = resize_image(latest_file)
-        if not resized_file:
-            await ctx.send("Fehler beim Verkleinern des Bildes.")
-            return
+        # Verkleinere das Bild mit ffmpeg
+        subprocess.run([
+            'ffmpeg', '-y',
+            '-i', input_file,
+            '-frames:v', '1',
+            '-update', '1',
+            '-vf', "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease",
+            '-compression_level', '9',
+            temp_file
+        ], check=True)
         
-        # Sende das Bild
-        with open(resized_file, 'rb') as f:
-            await ctx.send(file=discord.File(f))
-        print(f"Letztes Bild erfolgreich an Discord gesendet: {resized_file}")
-        
-        # Lösche die temporäre Datei, falls eine erstellt wurde
-        if resized_file != latest_file:
-            os.remove(resized_file)
-    except Exception as e:
-        await ctx.send(f"Fehler beim Senden des Bildes: {str(e)}")
-        print(f"Fehler beim Senden des letzten Bildes: {str(e)}")
+        if os.path.exists(temp_file) and os.path.getsize(temp_file) > 0:
+            return temp_file
+        else:
+            print("Fehler beim Verkleinern des Bildes")
+            return None
+    return input_file
 
 @bot.event
 async def on_ready():
     print(f'Bot ist eingeloggt als {bot.user.name}')
+    # Lade alle Cogs
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py'):
+            await bot.load_extension(f'cogs.{filename[:-3]}')
+    # Synchronisiere die Slash Commands
+    await bot.tree.sync()
     # Starte die Status-Rotation und den Daily Post Check
     change_status.start()
     check_daily_post.start()
