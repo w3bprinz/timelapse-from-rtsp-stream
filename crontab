@@ -1,5 +1,5 @@
 # Screenshot alle 5 Minuten
-*/5 * * * * /app/screenshot_script.sh >> /var/log/screenshot.log 2>&1
+*/5 * * * * /app/screenshot_script.sh screenshot >> /var/log/screenshot.log 2>&1
 
 # Timelapse-Video erstellen und senden um Mitternacht
 0 0 * * * /app/screenshot_script.sh timelapse >> /var/log/screenshot.log 2>&1
