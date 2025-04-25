@@ -197,18 +197,18 @@ async def on_ready():
             for guild_id in DISCORD_GUILD_IDS:
                 guild = bot.get_guild(guild_id)
                 if guild:
-                    logger.info("Synchronisiere Commands für Guild: %s (%s)", guild.name, guild.id)
+                    logger.info(f"Synchronisiere Commands für Guild: {guild.name} ({guild.id})")
                     logger.info("Vorhandene Commands vor der Synchronisation:")
-                    for command in guild.commands:
-                        logger.info("- %s", command.name)
+                    for command in bot.tree.get_commands(guild=guild):
+                        logger.info(f"- {command.name}")
                     
                     try:
                         synced = await bot.tree.sync(guild=guild)
-                        logger.info("Erfolgreich synchronisierte Commands für %s:", guild.name)
+                        logger.info(f"Erfolgreich synchronisierte Commands für {guild.name}:")
                         for command in synced:
-                            logger.info("- %s", command.name)
+                            logger.info(f"- {command.name}")
                     except Exception as e:
-                        logger.error("Fehler bei der Synchronisation für Guild %s: %s", guild.name, str(e))
+                        logger.error(f"Fehler bei der Synchronisation für Guild {guild.name}: {str(e)}")
                 else:
                     logger.warning(f"Guild mit ID {guild_id} nicht gefunden!")
 
