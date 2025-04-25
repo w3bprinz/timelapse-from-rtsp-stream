@@ -7,10 +7,13 @@ from dotenv import load_dotenv
 
 class ImageCommands(app_commands.Group):
     def __init__(self, bot):
-        super().__init__(name="image", description="Bild-bezogene Befehle")
-        self.bot = bot
-        # Lade die .env Datei
+        # Lade die Guild IDs aus der .env
         load_dotenv('/app/.env')
+        guild_ids = os.getenv('DISCORD_GUILD_IDS', '').split(',')
+        guild_ids = [int(guild_id.strip()) for guild_id in guild_ids if guild_id.strip()]
+        
+        super().__init__(name="image", description="Bild-bezogene Befehle", guild_ids=guild_ids)
+        self.bot = bot
         # Hole die Channel-ID aus der .env
         self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
 

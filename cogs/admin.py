@@ -1,10 +1,17 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+import os
+from dotenv import load_dotenv
 
 class AdminCommands(app_commands.Group):
     def __init__(self, bot):
-        super().__init__(name="admin", description="Admin-Befehle")
+        # Lade die Guild IDs aus der .env
+        load_dotenv('/app/.env')
+        guild_ids = os.getenv('DISCORD_GUILD_IDS', '').split(',')
+        guild_ids = [int(guild_id.strip()) for guild_id in guild_ids if guild_id.strip()]
+        
+        super().__init__(name="admin", description="Admin-Befehle", guild_ids=guild_ids)
         self.bot = bot
 
     @app_commands.command(
