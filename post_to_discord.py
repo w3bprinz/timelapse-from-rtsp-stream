@@ -182,7 +182,7 @@ async def on_ready():
             # Warte kurz, um sicherzustellen, dass alle Cogs geladen sind
             await asyncio.sleep(1)
             
-            # Synchronisiere für alle Guilds
+            # Zuerst für jede Guild synchronisieren
             for guild in bot.guilds:
                 try:
                     logger.info(f"Synchronisiere Commands für Guild: {guild.name} ({guild.id})")
@@ -191,11 +191,15 @@ async def on_ready():
                 except Exception as e:
                     logger.error(f"Fehler beim Synchronisieren der Guild {guild.id}: {str(e)}")
             
-            # Synchronisiere auch global
+            # Dann global synchronisieren
             synced = await bot.tree.sync()
             logger.info(f"Global synchronisierte {len(synced)} Slash Commands")
             for cmd in synced:
                 logger.info(f"- {cmd.name}")
+                # Zeige auch die Subcommands an
+                if hasattr(cmd, 'commands'):
+                    for subcmd in cmd.commands:
+                        logger.info(f"  - {cmd.name} {subcmd.name}")
         except Exception as e:
             logger.error(f"Fehler beim Synchronisieren der Slash Commands: {str(e)}")
             import traceback
