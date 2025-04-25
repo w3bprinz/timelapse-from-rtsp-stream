@@ -8,53 +8,45 @@ from dotenv import load_dotenv
 import subprocess
 import logging
 
+# Umleitung von stdout und stderr
+class StreamToLogger:
+    def __init__(self, level):
+        self.level = level
+        self.linebuf = ''
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            if line:  # Ignoriere leere Zeilen
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {self.level} - {line}")
+    
+    def flush(self):
+        pass
+
+# Leite stdout und stderr um
+sys.stdout = StreamToLogger('INFO')
+sys.stderr = StreamToLogger('ERROR')
+
 # Konfiguriere Logging
-class DockerFormatter(logging.Formatter):
-    def format(self, record):
-        # Entferne Zeilenumbrüche, damit jeder Log eine einzelne Zeile ist
-        if isinstance(record.msg, str):
-            record.msg = record.msg.replace('\n', ' ')
-        return super().format(record)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)  # Nur ein Handler für stdout
+    ]
+)
 
-# Erstelle Handler für Docker-Logs
-docker_info_handler = logging.StreamHandler(sys.stdout)  # INFO zu stdout
-docker_info_handler.setFormatter(DockerFormatter('%(asctime)s - %(levelname)s - %(message)s'))
-docker_info_handler.setLevel(logging.INFO)
-
-docker_error_handler = logging.StreamHandler(sys.stderr)  # ERROR und WARNING zu stderr
-docker_error_handler.setFormatter(DockerFormatter('%(asctime)s - %(levelname)s - %(message)s'))
-docker_error_handler.setLevel(logging.WARNING)
-
-file_handler = logging.FileHandler('/var/log/discord_bot.log')
-file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-file_handler.setLevel(logging.INFO)
-
-# Konfiguriere Root-Logger
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
-root_logger.addHandler(docker_info_handler)
-root_logger.addHandler(docker_error_handler)
-root_logger.addHandler(file_handler)
-
-# Konfiguriere Discord-Logger
+# Konfiguriere Discord Logger
 discord_logger = logging.getLogger('discord')
 discord_logger.setLevel(logging.INFO)
 # Entferne alle bestehenden Handler
 for handler in discord_logger.handlers[:]:
     discord_logger.removeHandler(handler)
-# Verwende nur unsere Handler
-discord_logger.addHandler(docker_info_handler)
-discord_logger.addHandler(docker_error_handler)
-# Verhindere Propagierung zum Root-Logger
+# Verwende nur den stdout Handler
+discord_logger.addHandler(logging.StreamHandler(sys.stdout))
 discord_logger.propagate = False
 
 # Erstelle Logger für dieses Modul
 logger = logging.getLogger(__name__)
-# Verhindere Propagierung zum Root-Logger
-logger.propagate = False
-logger.addHandler(docker_info_handler)
-logger.addHandler(docker_error_handler)
-logger.addHandler(file_handler)
 
 # Füge den Python-Pfad hinzu
 sys.path.append('/usr/local/lib/python3.9/site-packages')
