@@ -14,7 +14,6 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('/var/log/discord_bot.log'),
-        logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)
