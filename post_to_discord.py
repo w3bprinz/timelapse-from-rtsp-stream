@@ -136,12 +136,35 @@ def resize_image(input_file):
 @bot.event
 async def on_ready():
     print(f'Bot ist eingeloggt als {bot.user.name}')
+    
+    # Debug: Zeige verfügbare Cogs
+    print("Verfügbare Cogs im Verzeichnis:")
+    for filename in os.listdir('./cogs'):
+        print(f"- {filename}")
+    
     # Lade alle Cogs
+    loaded_cogs = []
     for filename in os.listdir('./cogs'):
         if filename.endswith('.py') and not filename.startswith('__'):
-            await bot.load_extension(f'cogs.{filename[:-3]}')
+            cog_name = filename[:-3]
+            try:
+                await bot.load_extension(f'cogs.{cog_name}')
+                loaded_cogs.append(cog_name)
+                print(f"Erfolgreich geladen: cogs.{cog_name}")
+            except Exception as e:
+                print(f"Fehler beim Laden von cogs.{cog_name}: {str(e)}")
+    
+    print(f"Geladene Cogs: {loaded_cogs}")
+    
     # Synchronisiere die Slash Commands
-    await bot.tree.sync()
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synchonisierte {len(synced)} Slash Commands")
+        for cmd in synced:
+            print(f"- {cmd.name}")
+    except Exception as e:
+        print(f"Fehler beim Synchronisieren der Slash Commands: {str(e)}")
+    
     # Starte die Status-Rotation und den Daily Post Check
     change_status.start()
     check_daily_post.start()
