@@ -1,20 +1,25 @@
 import discord
 from discord import app_commands
+from discord.ext import commands
 import glob
 import os
 import subprocess
 from dotenv import load_dotenv
 
-class ImageCommands(app_commands.Group, name="image"):
+class ImageCommands(commands.Cog):
     def __init__(self, bot):
-        super().__init__(name="image", description="Bild-bezogene Befehle")
         self.bot = bot
-        # Lade die .env Datei
+        self.group = app_commands.Group(name="image", description="Bild-bezogene Befehle")
+        bot.tree.add_command(self.group)
+        # Lade die Channel-ID aus der .env
         load_dotenv('/app/.env')
-        # Hole die Channel-ID aus der .env
         self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
 
-    @app_commands.command(name="last", description="Zeigt das letzte aufgenommene Bild")
+    @app_commands.command(
+        name="last",
+        description="Zeigt das letzte aufgenommene Bild",
+        parent=self.group
+    )
     @app_commands.guild_only()
     async def last(self, interaction: discord.Interaction):
         # Überprüfe, ob der Command im richtigen Channel verwendet wird

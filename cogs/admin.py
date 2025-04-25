@@ -4,23 +4,21 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 
-class AdminCommands(app_commands.Group, name="admin"):
+class AdminCommands(commands.Cog):
     def __init__(self, bot):
-        # Lade die Guild IDs aus der .env
-        load_dotenv('/app/.env')
-        guild_ids = os.getenv('DISCORD_GUILD_IDS', '').split(',')
-        guild_ids = [int(guild_id.strip()) for guild_id in guild_ids if guild_id.strip()]
-        
-        super().__init__(name="admin", description="Admin-Befehle")
         self.bot = bot
+        self.group = app_commands.Group(name="admin", description="Admin-Befehle")
+        bot.tree.add_command(self.group)
 
     @app_commands.command(
         name="purge",
-        description="Löscht alle Nachrichten im aktuellen Channel"
+        description="Löscht alle Nachrichten im aktuellen Channel",
+        parent=self.group
     )
     @app_commands.guild_only()
     @app_commands.checks.has_permissions(administrator=True)
     async def purge(self, interaction: discord.Interaction):
+        """Der Command wird automatisch der admin-Gruppe zugeordnet"""
         # Überprüfe, ob der Benutzer der Bot-Owner ist
         if interaction.user.id != self.bot.owner_id:
             await interaction.response.send_message(
