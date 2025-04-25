@@ -8,42 +8,21 @@ from dotenv import load_dotenv
 import subprocess
 import logging
 
-# Umleitung von stdout und stderr
-class StreamToLogger:
-    def __init__(self, level):
-        self.level = level
-        self.linebuf = ''
-
-    def write(self, buf):
-        for line in buf.rstrip().splitlines():
-            if line:  # Ignoriere leere Zeilen
-                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {self.level} - {line}")
-    
-    def flush(self):
-        pass
-
-# Leite stdout und stderr um
-sys.stdout = StreamToLogger('INFO')
-sys.stderr = StreamToLogger('ERROR')
-
 # Konfiguriere Logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stdout)  # Nur ein Handler für stdout
+        logging.FileHandler('/var/log/discord_bot.log'),
+        logging.StreamHandler(sys.stdout)
     ]
 )
 
 # Konfiguriere Discord Logger
 discord_logger = logging.getLogger('discord')
 discord_logger.setLevel(logging.INFO)
-# Entferne alle bestehenden Handler
-for handler in discord_logger.handlers[:]:
-    discord_logger.removeHandler(handler)
-# Verwende nur den stdout Handler
+discord_logger.addHandler(logging.FileHandler('/var/log/discord_bot.log'))
 discord_logger.addHandler(logging.StreamHandler(sys.stdout))
-discord_logger.propagate = False
 
 # Erstelle Logger für dieses Modul
 logger = logging.getLogger(__name__)
