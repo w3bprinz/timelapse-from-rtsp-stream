@@ -200,15 +200,18 @@ async def on_ready():
                     logger.info(f"Synchronisiere Commands für Guild: {guild.name} ({guild.id})")
                     try:
                         # Synchronisiere die Commands
-                        synced = await bot.tree.sync(guild=guild)
+                        await bot.tree.sync(guild=guild)
+                        
+                        # Hole die tatsächlich synchronisierten Commands
+                        commands = await bot.tree.fetch_commands(guild=guild)
                         
                         # Zeige die erfolgreich synchronisierten Commands
                         logger.info(f"Erfolgreich synchronisierte Commands für {guild.name}:")
-                        for cmd in synced:
+                        for cmd in commands:
                             logger.info(f"- {cmd.name}")
-                            if hasattr(cmd, 'commands'):
-                                for subcmd in cmd.commands:
-                                    logger.info(f"  └─ {subcmd.name}")
+                            if hasattr(cmd, 'options'):
+                                for option in cmd.options:
+                                    logger.info(f"  └─ {option.name}")
                     except Exception as e:
                         logger.error(f"Fehler bei der Synchronisation für Guild {guild.name}: {str(e)}")
                         import traceback
