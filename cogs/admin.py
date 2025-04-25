@@ -2,8 +2,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-class AdminCog(commands.Cog):
+class AdminCommands(app_commands.Group):
     def __init__(self, bot):
+        super().__init__(name="admin", description="Admin-Befehle")
         self.bot = bot
 
     @app_commands.command(
@@ -49,4 +50,4 @@ class AdminCog(commands.Cog):
             )
 
 async def setup(bot):
-    await bot.add_cog(AdminCog(bot)) 
+    bot.tree.add_command(AdminCommands(bot)) 
