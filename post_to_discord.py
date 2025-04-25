@@ -12,7 +12,8 @@ import logging
 class DockerFormatter(logging.Formatter):
     def format(self, record):
         # Entferne Zeilenumbrüche, damit jeder Log eine einzelne Zeile ist
-        record.msg = record.msg.replace('\n', ' ')
+        if isinstance(record.msg, str):
+            record.msg = record.msg.replace('\n', ' ')
         return super().format(record)
 
 # Erstelle Handler für Docker-Logs (stdout) und Datei
@@ -23,12 +24,26 @@ file_handler = logging.FileHandler('/var/log/discord_bot.log')
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
 # Konfiguriere Root-Logger
-logging.basicConfig(level=logging.INFO, handlers=[docker_handler, file_handler])
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+root_logger.addHandler(docker_handler)
+root_logger.addHandler(file_handler)
+
+# Konfiguriere Discord-Logger
+discord_logger = logging.getLogger('discord')
+discord_logger.setLevel(logging.INFO)
+# Entferne alle bestehenden Handler
+for handler in discord_logger.handlers[:]:
+    discord_logger.removeHandler(handler)
+# Verwende nur unsere Handler
+discord_logger.addHandler(docker_handler)
+discord_logger.addHandler(file_handler)
+# Verhindere Propagierung zum Root-Logger
+discord_logger.propagate = False
 
 # Erstelle Logger für dieses Modul
 logger = logging.getLogger(__name__)
-
-# Verhindere Propagierung zu Root-Logger um doppelte Logs zu vermeiden
+# Verhindere Propagierung zum Root-Logger
 logger.propagate = False
 
 # Füge den Python-Pfad hinzu
