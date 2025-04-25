@@ -199,17 +199,34 @@ async def on_ready():
                 if guild:
                     logger.info(f"Synchronisiere Commands für Guild: {guild.name} ({guild.id})")
                     try:
+                        # Zeige Commands vor der Synchronisation
+                        logger.info("Vorhandene Commands vor der Synchronisation:")
+                        for cmd in bot.tree.get_commands(guild=guild):
+                            logger.info(f"- {cmd.name} (Typ: {type(cmd)})")
+                        
+                        # Synchronisiere
                         commands = await bot.tree.sync(guild=guild)
-                        logger.info(f"Commands für Guild {guild.name} synchronisiert: {[cmd.name for cmd in commands]}")
+                        
+                        # Zeige synchronisierte Commands
+                        logger.info(f"Erfolgreich synchronisierte Commands für {guild.name}:")
+                        for cmd in commands:
+                            logger.info(f"- {cmd.name} (Typ: {type(cmd)})")
+                            if hasattr(cmd, 'commands'):
+                                for subcmd in cmd.commands:
+                                    logger.info(f"  └─ {subcmd.name}")
                     except Exception as e:
                         logger.error(f"Fehler beim Synchronisieren der Guild {guild.id}: {str(e)}")
+                        logger.error(traceback.format_exc())
                 else:
                     logger.warning(f"Guild mit ID {guild_id} nicht gefunden!")
 
-            # Zeige alle registrierten Commands
-            logger.info("Registrierte Commands:")
-            for command in bot.tree.get_commands():
-                logger.info(f"- {command.name} (Typ: {type(command)})")
+            # Zeige finalen Status aller Commands
+            logger.info("\nFinaler Status aller registrierten Commands:")
+            for cmd in bot.tree.get_commands():
+                logger.info(f"- {cmd.name} (Typ: {type(cmd)})")
+                if hasattr(cmd, 'commands'):
+                    for subcmd in cmd.commands:
+                        logger.info(f"  └─ {subcmd.name}")
                 
         except Exception as e:
             logger.error(f"Fehler beim Synchronisieren der Slash Commands: {str(e)}")
