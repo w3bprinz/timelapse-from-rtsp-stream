@@ -12,7 +12,7 @@ class ImageCommands(app_commands.Group):
         guild_ids = os.getenv('DISCORD_GUILD_IDS', '').split(',')
         guild_ids = [int(guild_id.strip()) for guild_id in guild_ids if guild_id.strip()]
         
-        super().__init__(name="image", description="Bild-bezogene Befehle", guild_ids=guild_ids)
+        super().__init__(name="image", description="Bild-bezogene Befehle")
         self.bot = bot
         # Hole die Channel-ID aus der .env
         self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
@@ -88,17 +88,4 @@ class ImageCommands(app_commands.Group):
 async def setup(bot):
     command_group = ImageCommands(bot)
     bot.tree.add_command(command_group)
-    
-    # Synchronisiere die Commands direkt für die spezifizierten Guilds
-    load_dotenv('/app/.env')
-    guild_ids = os.getenv('DISCORD_GUILD_IDS', '').split(',')
-    guild_ids = [int(guild_id.strip()) for guild_id in guild_ids if guild_id.strip()]
-    
-    for guild_id in guild_ids:
-        guild = bot.get_guild(guild_id)
-        if guild:
-            try:
-                await bot.tree.sync(guild=guild)
-                print(f"Image-Commands für Guild {guild.name} synchronisiert")
-            except Exception as e:
-                print(f"Fehler beim Synchronisieren der Image-Commands für Guild {guild.name}: {str(e)}") 
+    print(f"Image-Commands wurden registriert") 

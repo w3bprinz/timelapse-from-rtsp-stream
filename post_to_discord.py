@@ -198,15 +198,6 @@ async def on_ready():
                 guild = bot.get_guild(guild_id)
                 if guild:
                     logger.info(f"Synchronisiere Commands für Guild: {guild.name} ({guild.id})")
-                    
-                    # Zeige alle registrierten Commands vor der Synchronisation
-                    logger.info("Registrierte Commands vor der Synchronisation:")
-                    for cmd in bot.tree.get_commands():
-                        logger.info(f"- {cmd.name}")
-                        if hasattr(cmd, 'commands'):
-                            for subcmd in cmd.commands:
-                                logger.info(f"  └─ {subcmd.name}")
-                    
                     try:
                         # Synchronisiere die Commands
                         synced = await bot.tree.sync(guild=guild)
@@ -214,15 +205,6 @@ async def on_ready():
                         # Zeige die erfolgreich synchronisierten Commands
                         logger.info(f"Erfolgreich synchronisierte Commands für {guild.name}:")
                         for cmd in synced:
-                            logger.info(f"- {cmd.name}")
-                            if hasattr(cmd, 'commands'):
-                                for subcmd in cmd.commands:
-                                    logger.info(f"  └─ {subcmd.name}")
-                        
-                        # Überprüfe die tatsächlich verfügbaren Commands
-                        guild_commands = await bot.tree.fetch_commands(guild=guild)
-                        logger.info(f"Tatsächlich verfügbare Commands in {guild.name}:")
-                        for cmd in guild_commands:
                             logger.info(f"- {cmd.name}")
                             if hasattr(cmd, 'commands'):
                                 for subcmd in cmd.commands:

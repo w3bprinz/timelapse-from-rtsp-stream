@@ -11,7 +11,7 @@ class AdminCommands(app_commands.Group):
         guild_ids = os.getenv('DISCORD_GUILD_IDS', '').split(',')
         guild_ids = [int(guild_id.strip()) for guild_id in guild_ids if guild_id.strip()]
         
-        super().__init__(name="admin", description="Admin-Befehle", guild_ids=guild_ids)
+        super().__init__(name="admin", description="Admin-Befehle")
         self.bot = bot
 
     @app_commands.command(
@@ -59,17 +59,4 @@ class AdminCommands(app_commands.Group):
 async def setup(bot):
     command_group = AdminCommands(bot)
     bot.tree.add_command(command_group)
-    
-    # Synchronisiere die Commands direkt für die spezifizierten Guilds
-    load_dotenv('/app/.env')
-    guild_ids = os.getenv('DISCORD_GUILD_IDS', '').split(',')
-    guild_ids = [int(guild_id.strip()) for guild_id in guild_ids if guild_id.strip()]
-    
-    for guild_id in guild_ids:
-        guild = bot.get_guild(guild_id)
-        if guild:
-            try:
-                await bot.tree.sync(guild=guild)
-                print(f"Admin-Commands für Guild {guild.name} synchronisiert")
-            except Exception as e:
-                print(f"Fehler beim Synchronisieren der Admin-Commands für Guild {guild.name}: {str(e)}") 
+    print(f"Admin-Commands wurden registriert") 
