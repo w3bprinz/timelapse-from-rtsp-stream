@@ -36,6 +36,7 @@ load_dotenv(env_file)
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 DISCORD_CHANNEL_ID = os.getenv('DISCORD_CHANNEL_ID')
 DISCORD_DAILY_CHANNEL_ID = os.getenv('DISCORD_DAILY_CHANNEL_ID')
+DISCORD_GUILD_IDS = os.getenv('DISCORD_GUILD_IDS', '').split(',')  # Komma-separierte Liste von Guild IDs
 
 # Überprüfe, ob alle erforderlichen Umgebungsvariablen vorhanden sind
 if not DISCORD_BOT_TOKEN:
@@ -47,10 +48,21 @@ if not DISCORD_CHANNEL_ID:
 if not DISCORD_DAILY_CHANNEL_ID:
     logger.error("Fehler: DISCORD_DAILY_CHANNEL_ID nicht gesetzt")
     sys.exit(1)
+if not DISCORD_GUILD_IDS:
+    logger.error("Fehler: DISCORD_GUILD_IDS nicht gesetzt")
+    sys.exit(1)
+
+# Konvertiere Guild IDs zu Integers
+try:
+    DISCORD_GUILD_IDS = [int(guild_id.strip()) for guild_id in DISCORD_GUILD_IDS if guild_id.strip()]
+except ValueError as e:
+    logger.error(f"Fehler: Ungültige Guild ID in DISCORD_GUILD_IDS: {str(e)}")
+    sys.exit(1)
 
 logger.info(f"Bot Token: {'*' * len(DISCORD_BOT_TOKEN)}")
 logger.info(f"Channel ID: {DISCORD_CHANNEL_ID}")
 logger.info(f"Daily Channel ID: {DISCORD_DAILY_CHANNEL_ID}")
+logger.info(f"Guild IDs: {DISCORD_GUILD_IDS}")
 
 # Erstelle den Bot mit den intents
 intents = discord.Intents.default()
@@ -181,24 +193,24 @@ async def on_ready():
             # Warte kurz, um sicherzustellen, dass alle Cogs geladen sind
             await asyncio.sleep(1)
             
-            # Zuerst für jede Guild synchronisieren
-            for guild in bot.guilds:
-                try:
+            # Synchronisiere für jede Guild einzeln
+            for guild_id in DISCORD_GUILD_IDS:
+                guild = bot.get_guild(guild_id)
+                if guild:
                     logger.info(f"Synchronisiere Commands für Guild: {guild.name} ({guild.id})")
-                    await bot.tree.sync(guild=guild)
-                    logger.info(f"Commands für Guild {guild.name} synchronisiert")
-                except Exception as e:
-                    logger.error(f"Fehler beim Synchronisieren der Guild {guild.id}: {str(e)}")
-            
-            # Dann global synchronisieren
-            synced = await bot.tree.sync()
-            logger.info(f"Global synchronisierte {len(synced)} Slash Commands")
-            for cmd in synced:
-                logger.info(f"- {cmd.name}")
-                # Zeige auch die Subcommands an
-                if hasattr(cmd, 'commands'):
-                    for subcmd in cmd.commands:
-                        logger.info(f"  - {cmd.name} {subcmd.name}")
+                    try:
+                        commands = await bot.tree.sync(guild=guild)
+                        logger.info(f"Commands für Guild {guild.name} synchronisiert: {[cmd.name for cmd in commands]}")
+                    except Exception as e:
+                        logger.error(f"Fehler beim Synchronisieren der Guild {guild.id}: {str(e)}")
+                else:
+                    logger.warning(f"Guild mit ID {guild_id} nicht gefunden!")
+
+            # Zeige alle registrierten Commands
+            logger.info("Registrierte Commands:")
+            for command in bot.tree.get_commands():
+                logger.info(f"- {command.name} (Typ: {type(command)})")
+                
         except Exception as e:
             logger.error(f"Fehler beim Synchronisieren der Slash Commands: {str(e)}")
             import traceback
