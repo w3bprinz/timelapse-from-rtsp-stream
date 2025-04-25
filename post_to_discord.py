@@ -138,7 +138,7 @@ async def on_ready():
     print(f'Bot ist eingeloggt als {bot.user.name}')
     # Lade alle Cogs
     for filename in os.listdir('./cogs'):
-        if filename.endswith('.py'):
+        if filename.endswith('.py') and not filename.startswith('__'):
             await bot.load_extension(f'cogs.{filename[:-3]}')
     # Synchronisiere die Slash Commands
     await bot.tree.sync()
