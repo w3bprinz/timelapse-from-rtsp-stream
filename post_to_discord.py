@@ -209,9 +209,9 @@ async def on_ready():
                         logger.info(f"Erfolgreich synchronisierte Commands für {guild.name}:")
                         for cmd in commands:
                             logger.info(f"- {cmd.name}")
-                            if hasattr(cmd, 'options'):
-                                for option in cmd.options:
-                                    logger.info(f"  └─ {option.name}")
+                            if isinstance(cmd, discord.app_commands.Group):
+                                for subcmd in await cmd.fetch_commands():
+                                    logger.info(f"  └─ {subcmd.name}")
                     except Exception as e:
                         logger.error(f"Fehler bei der Synchronisation für Guild {guild.name}: {str(e)}")
                         import traceback
