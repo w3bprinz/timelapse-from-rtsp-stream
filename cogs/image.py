@@ -85,7 +85,7 @@ class ImageCommands(app_commands.Group):
 async def setup(bot):
     try:
         commands = ImageCommands(bot)
-        await bot.tree.add_command(commands)
+        bot.tree.add_command(commands)
         print(f"ImageCommands erfolgreich registriert mit {len(commands.commands)} Befehlen")
     except Exception as e:
         print(f"Fehler beim Registrieren der ImageCommands: {str(e)}") 
