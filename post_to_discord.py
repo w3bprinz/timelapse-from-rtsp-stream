@@ -16,17 +16,24 @@ class DockerFormatter(logging.Formatter):
             record.msg = record.msg.replace('\n', ' ')
         return super().format(record)
 
-# Erstelle Handler für Docker-Logs (stdout) und Datei
-docker_handler = logging.StreamHandler(sys.stdout)
-docker_handler.setFormatter(DockerFormatter('%(asctime)s - %(levelname)s - %(message)s'))
+# Erstelle Handler für Docker-Logs
+docker_info_handler = logging.StreamHandler(sys.stdout)  # INFO zu stdout
+docker_info_handler.setFormatter(DockerFormatter('%(asctime)s - %(levelname)s - %(message)s'))
+docker_info_handler.setLevel(logging.INFO)
+
+docker_error_handler = logging.StreamHandler(sys.stderr)  # ERROR und WARNING zu stderr
+docker_error_handler.setFormatter(DockerFormatter('%(asctime)s - %(levelname)s - %(message)s'))
+docker_error_handler.setLevel(logging.WARNING)
 
 file_handler = logging.FileHandler('/var/log/discord_bot.log')
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+file_handler.setLevel(logging.INFO)
 
 # Konfiguriere Root-Logger
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
-root_logger.addHandler(docker_handler)
+root_logger.addHandler(docker_info_handler)
+root_logger.addHandler(docker_error_handler)
 root_logger.addHandler(file_handler)
 
 # Konfiguriere Discord-Logger
@@ -36,8 +43,8 @@ discord_logger.setLevel(logging.INFO)
 for handler in discord_logger.handlers[:]:
     discord_logger.removeHandler(handler)
 # Verwende nur unsere Handler
-discord_logger.addHandler(docker_handler)
-discord_logger.addHandler(file_handler)
+discord_logger.addHandler(docker_info_handler)
+discord_logger.addHandler(docker_error_handler)
 # Verhindere Propagierung zum Root-Logger
 discord_logger.propagate = False
 
@@ -45,6 +52,9 @@ discord_logger.propagate = False
 logger = logging.getLogger(__name__)
 # Verhindere Propagierung zum Root-Logger
 logger.propagate = False
+logger.addHandler(docker_info_handler)
+logger.addHandler(docker_error_handler)
+logger.addHandler(file_handler)
 
 # Füge den Python-Pfad hinzu
 sys.path.append('/usr/local/lib/python3.9/site-packages')
