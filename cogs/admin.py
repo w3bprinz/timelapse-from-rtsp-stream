@@ -6,6 +6,9 @@ class AdminCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def cog_load(self):
+        self.bot.tree.add_command(self.purge)
+
     @app_commands.command(
         name="purge",
         description="Löscht alle Nachrichten im aktuellen Channel"
