@@ -19,9 +19,6 @@ class ImageCommands(commands.Cog):
     def group(self) -> app_commands.Group:
         return self._group
 
-    async def cog_load(self) -> None:
-        self.bot.tree.add_command(self._group)
-
     @app_commands.command(name="last", description="Zeigt das letzte Bild an")
     @app_commands.guild_only()
     async def last(self, interaction: discord.Interaction):

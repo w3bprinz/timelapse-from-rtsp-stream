@@ -14,9 +14,6 @@ class AdminCommands(commands.Cog):
     def group(self) -> app_commands.Group:
         return self._group
 
-    async def cog_load(self) -> None:
-        self.bot.tree.add_command(self._group)
-
     @app_commands.command(name="purge", description="Löscht alle Nachrichten im aktuellen Channel")
     @app_commands.guild_only()
     @app_commands.checks.has_permissions(administrator=True)
