@@ -8,17 +8,15 @@ class AdminCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.group = app_commands.Group(name="admin", description="Admin-Befehle")
+        self.group.add_command(app_commands.Command(
+            name="purge",
+            description="Löscht alle Nachrichten im aktuellen Channel",
+            callback=self.purge,
+            guild_only=True
+        ))
         bot.tree.add_command(self.group)
 
-    @app_commands.command(
-        name="purge",
-        description="Löscht alle Nachrichten im aktuellen Channel",
-        parent=self.group
-    )
-    @app_commands.guild_only()
-    @app_commands.checks.has_permissions(administrator=True)
     async def purge(self, interaction: discord.Interaction):
-        """Der Command wird automatisch der admin-Gruppe zugeordnet"""
         # Überprüfe, ob der Benutzer der Bot-Owner ist
         if interaction.user.id != self.bot.owner_id:
             await interaction.response.send_message(
@@ -46,7 +44,7 @@ class AdminCommands(commands.Cog):
                 ephemeral=True
             )
 
-    @purge.error
+    @app_commands.checks.has_permissions(administrator=True)
     async def purge_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.errors.MissingPermissions):
             await interaction.response.send_message(

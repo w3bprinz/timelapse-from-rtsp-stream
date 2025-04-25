@@ -10,17 +10,18 @@ class ImageCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.group = app_commands.Group(name="image", description="Bild-bezogene Befehle")
-        bot.tree.add_command(self.group)
         # Lade die Channel-ID aus der .env
         load_dotenv('/app/.env')
         self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
+        
+        self.group.add_command(app_commands.Command(
+            name="last",
+            description="Zeigt das letzte aufgenommene Bild",
+            callback=self.last,
+            guild_only=True
+        ))
+        bot.tree.add_command(self.group)
 
-    @app_commands.command(
-        name="last",
-        description="Zeigt das letzte aufgenommene Bild",
-        parent=self.group
-    )
-    @app_commands.guild_only()
     async def last(self, interaction: discord.Interaction):
         # Überprüfe, ob der Command im richtigen Channel verwendet wird
         if interaction.channel_id != self.daily_channel_id:
