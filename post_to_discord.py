@@ -6,6 +6,18 @@ from datetime import datetime, time
 import pytz
 from dotenv import load_dotenv
 import subprocess
+import logging
+
+# Konfiguriere Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('/var/log/discord_bot.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Füge den Python-Pfad hinzu
 sys.path.append('/usr/local/lib/python3.9/site-packages')
@@ -17,7 +29,7 @@ import glob
 # Lade Umgebungsvariablen
 env_file = '/app/.env'
 if not os.path.exists(env_file):
-    print(f"Fehler: .env Datei nicht gefunden unter {env_file}")
+    logger.error(f"Fehler: .env Datei nicht gefunden unter {env_file}")
     sys.exit(1)
 
 load_dotenv(env_file)
@@ -29,18 +41,18 @@ DISCORD_DAILY_CHANNEL_ID = os.getenv('DISCORD_DAILY_CHANNEL_ID')
 
 # Überprüfe, ob alle erforderlichen Umgebungsvariablen vorhanden sind
 if not DISCORD_BOT_TOKEN:
-    print("Fehler: DISCORD_BOT_TOKEN nicht gesetzt")
+    logger.error("Fehler: DISCORD_BOT_TOKEN nicht gesetzt")
     sys.exit(1)
 if not DISCORD_CHANNEL_ID:
-    print("Fehler: DISCORD_CHANNEL_ID nicht gesetzt")
+    logger.error("Fehler: DISCORD_CHANNEL_ID nicht gesetzt")
     sys.exit(1)
 if not DISCORD_DAILY_CHANNEL_ID:
-    print("Fehler: DISCORD_DAILY_CHANNEL_ID nicht gesetzt")
+    logger.error("Fehler: DISCORD_DAILY_CHANNEL_ID nicht gesetzt")
     sys.exit(1)
 
-print(f"Bot Token: {'*' * len(DISCORD_BOT_TOKEN)}")
-print(f"Channel ID: {DISCORD_CHANNEL_ID}")
-print(f"Daily Channel ID: {DISCORD_DAILY_CHANNEL_ID}")
+logger.info(f"Bot Token: {'*' * len(DISCORD_BOT_TOKEN)}")
+logger.info(f"Channel ID: {DISCORD_CHANNEL_ID}")
+logger.info(f"Daily Channel ID: {DISCORD_DAILY_CHANNEL_ID}")
 
 # Erstelle den Bot mit den intents
 intents = discord.Intents.default()
@@ -78,7 +90,7 @@ async def check_daily_post():
             screenshot_dir = "/app/screenshots"
             list_of_files = glob.glob(f"{screenshot_dir}/screenshot_*.png")
             if not list_of_files:
-                print("Keine Screenshots für Daily Post gefunden")
+                logger.warning("Keine Screenshots für Daily Post gefunden")
                 return
 
             latest_file = max(list_of_files, key=os.path.getctime)
@@ -88,7 +100,7 @@ async def check_daily_post():
             # Verkleinere das Bild, falls nötig
             resized_file = resize_image(latest_file)
             if not resized_file:
-                print("Fehler beim Verkleinern des Bildes für Daily Post")
+                logger.error("Fehler beim Verkleinern des Bildes für Daily Post")
                 return
             
             # Sende das Bild in den Daily Channel
@@ -96,13 +108,13 @@ async def check_daily_post():
             if channel:
                 with open(resized_file, 'rb') as f:
                     await channel.send(content=message, file=discord.File(f))
-                print(f"Daily Post erfolgreich gesendet: {resized_file}")
+                logger.info(f"Daily Post erfolgreich gesendet: {resized_file}")
                 
                 # Lösche die temporäre Datei, falls eine erstellt wurde
                 if resized_file != latest_file:
                     os.remove(resized_file)
         except Exception as e:
-            print(f"Fehler beim Senden des Daily Posts: {str(e)}")
+            logger.error(f"Fehler beim Senden des Daily Posts: {str(e)}")
 
 def resize_image(input_file):
     """Verkleinert ein Bild, falls es größer als 10MB ist"""
@@ -110,7 +122,7 @@ def resize_image(input_file):
     size_mb = int(subprocess.check_output(['du', '-m', input_file]).split()[0].decode('utf-8'))
     
     if size_mb > max_size_mb:
-        print(f"Bild ist zu groß ({size_mb} MB), verkleinere es...")
+        logger.info(f"Bild ist zu groß ({size_mb} MB), verkleinere es...")
         # Behalte die ursprüngliche Dateiendung bei
         file_ext = os.path.splitext(input_file)[1]
         temp_file = f"{os.path.splitext(input_file)[0]}_resized{file_ext}"
@@ -129,24 +141,24 @@ def resize_image(input_file):
         if os.path.exists(temp_file) and os.path.getsize(temp_file) > 0:
             return temp_file
         else:
-            print("Fehler beim Verkleinern des Bildes")
+            logger.error("Fehler beim Verkleinern des Bildes")
             return None
     return input_file
 
 @bot.event
 async def on_ready():
     try:
-        print(f'Bot ist eingeloggt als {bot.user.name}')
+        logger.info(f'Bot ist eingeloggt als {bot.user.name}')
         
         # Debug: Zeige verfügbare Cogs
-        print("\nVerfügbare Cogs im Verzeichnis:")
+        logger.info("Verfügbare Cogs im Verzeichnis:")
         cogs_dir = './cogs'
         if not os.path.exists(cogs_dir):
-            print(f"FEHLER: Verzeichnis {cogs_dir} existiert nicht!")
+            logger.error(f"FEHLER: Verzeichnis {cogs_dir} existiert nicht!")
             return
             
         for filename in os.listdir(cogs_dir):
-            print(f"- {filename}")
+            logger.info(f"- {filename}")
         
         # Lade alle Cogs
         loaded_cogs = []
@@ -154,39 +166,39 @@ async def on_ready():
             if filename.endswith('.py') and not filename.startswith('__'):
                 cog_name = filename[:-3]
                 try:
-                    print(f"\nVersuche cogs.{cog_name} zu laden...")
+                    logger.info(f"Versuche cogs.{cog_name} zu laden...")
                     await bot.load_extension(f'cogs.{cog_name}')
                     loaded_cogs.append(cog_name)
-                    print(f"✅ Erfolgreich geladen: cogs.{cog_name}")
+                    logger.info(f"Erfolgreich geladen: cogs.{cog_name}")
                 except Exception as e:
-                    print(f"❌ Fehler beim Laden von cogs.{cog_name}: {str(e)}")
+                    logger.error(f"Fehler beim Laden von cogs.{cog_name}: {str(e)}")
                     import traceback
-                    traceback.print_exc()
+                    logger.error(traceback.format_exc())
         
-        print(f"\nGeladene Cogs: {loaded_cogs}")
+        logger.info(f"Geladene Cogs: {loaded_cogs}")
         
         # Synchronisiere die Slash Commands
         try:
-            print("\nSynchronisiere Slash Commands...")
+            logger.info("Synchronisiere Slash Commands...")
             synced = await bot.tree.sync()
-            print(f"✅ Synchonisierte {len(synced)} Slash Commands")
+            logger.info(f"Synchonisierte {len(synced)} Slash Commands")
             for cmd in synced:
-                print(f"- {cmd.name}")
+                logger.info(f"- {cmd.name}")
         except Exception as e:
-            print(f"❌ Fehler beim Synchronisieren der Slash Commands: {str(e)}")
+            logger.error(f"Fehler beim Synchronisieren der Slash Commands: {str(e)}")
             import traceback
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
         
         # Starte die Status-Rotation und den Daily Post Check
-        print("\nStarte Tasks...")
+        logger.info("Starte Tasks...")
         change_status.start()
         check_daily_post.start()
-        print("✅ Tasks gestartet")
+        logger.info("Tasks gestartet")
         
     except Exception as e:
-        print(f"❌ Kritischer Fehler in on_ready: {str(e)}")
+        logger.error(f"Kritischer Fehler in on_ready: {str(e)}")
         import traceback
-        traceback.print_exc()
+        logger.error(traceback.format_exc())
 
 # Wenn das Skript direkt ausgeführt wird (nicht als Modul)
 if __name__ == "__main__":
@@ -196,13 +208,13 @@ if __name__ == "__main__":
         message = sys.argv[2] if len(sys.argv) > 2 else f"Screenshot vom {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
 
         if not os.path.exists(file_path):
-            print(f"Fehler: Datei {file_path} existiert nicht")
+            logger.error(f"Fehler: Datei {file_path} existiert nicht")
             sys.exit(1)
 
         # Verkleinere das Bild, falls nötig
         resized_file = resize_image(file_path)
         if not resized_file:
-            print("Fehler beim Verkleinern des Bildes")
+            logger.error("Fehler beim Verkleinern des Bildes")
             sys.exit(1)
 
         # Erstelle einen temporären Client für den direkten Aufruf
@@ -213,19 +225,19 @@ if __name__ == "__main__":
             try:
                 channel = client.get_channel(int(DISCORD_CHANNEL_ID))
                 if not channel:
-                    print(f"Fehler: Kanal mit ID {DISCORD_CHANNEL_ID} nicht gefunden")
+                    logger.error(f"Fehler: Kanal mit ID {DISCORD_CHANNEL_ID} nicht gefunden")
                     await client.close()
                     return
 
                 with open(resized_file, 'rb') as f:
                     await channel.send(content=message, file=discord.File(f))
-                print(f"Erfolgreich an Discord gesendet: {resized_file}")
+                logger.info(f"Erfolgreich an Discord gesendet: {resized_file}")
                 
                 # Lösche die temporäre Datei, falls eine erstellt wurde
                 if resized_file != file_path:
                     os.remove(resized_file)
             except Exception as e:
-                print(f"Fehler beim Senden an Discord: {str(e)}")
+                logger.error(f"Fehler beim Senden an Discord: {str(e)}")
             finally:
                 await client.close()
 
