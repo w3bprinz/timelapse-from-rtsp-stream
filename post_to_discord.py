@@ -7,6 +7,9 @@ import pytz
 from dotenv import load_dotenv
 import subprocess
 import logging
+import discord
+from discord.ext import commands, tasks
+import glob
 
 # Grundlegende Logging-Konfiguration
 logging.basicConfig(
@@ -19,10 +22,6 @@ logger = logging.getLogger()
 
 # Füge den Python-Pfad hinzu
 sys.path.append('/usr/local/lib/python3.9/site-packages')
-
-import discord
-from discord.ext import commands, tasks
-import glob
 
 # Lade Umgebungsvariablen
 env_file = '/app/.env'
@@ -68,6 +67,34 @@ logger.info(f"Guild IDs: {DISCORD_GUILD_IDS}")
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+@bot.event
+async def on_ready():
+    logger.info(f'Bot ist eingeloggt als {bot.user.name}')
+    try:
+        synced = await bot.tree.sync()
+        logger.info(f"Synchronisierte {len(synced)} Slash-Befehle")
+    except Exception as e:
+        logger.error(f"Fehler beim Synchronisieren der Befehle: {e}")
+
+    # Starte die Tasks
+    change_status.start()
+    check_daily_post.start()
+
+async def load_cogs():
+    cogs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cogs')
+    if not os.path.exists(cogs_dir):
+        logger.error(f"FEHLER: Verzeichnis {cogs_dir} existiert nicht!")
+        return
+
+    for filename in os.listdir(cogs_dir):
+        if filename.endswith('.py') and not filename.startswith('__'):
+            try:
+                await bot.load_extension(f'cogs.{filename[:-3]}')
+                logger.info(f"Erfolgreich geladen: cogs.{filename[:-3]}")
+            except Exception as e:
+                logger.error(f"Fehler beim Laden von cogs.{filename[:-3]}: {str(e)}")
+                logger.error(f"Details: {e.__class__.__name__}: {str(e)}")
 
 # Status-Rotation
 status_messages = [
@@ -155,90 +182,9 @@ def resize_image(input_file):
             return None
     return input_file
 
-@bot.event
-async def on_ready():
-    try:
-        logger.info(f'Bot ist eingeloggt als {bot.user.name}')
-        
-        # Debug: Zeige verfügbare Cogs
-        logger.info("Verfügbare Cogs im Verzeichnis:")
-        cogs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cogs')
-        if not os.path.exists(cogs_dir):
-            logger.error(f"FEHLER: Verzeichnis {cogs_dir} existiert nicht!")
-            return
-            
-        for filename in os.listdir(cogs_dir):
-            logger.info(f"- {filename}")
-        
-        # Lade alle Cogs
-        loaded_cogs = []
-        for filename in os.listdir(cogs_dir):
-            if filename.endswith('.py') and not filename.startswith('__'):
-                cog_name = filename[:-3]
-                try:
-                    logger.info(f"Versuche cogs.{cog_name} zu laden...")
-                    await bot.load_extension(f'cogs.{cog_name}')
-                    loaded_cogs.append(cog_name)
-                    logger.info(f"Erfolgreich geladen: cogs.{cog_name}")
-                except Exception as e:
-                    logger.error(f"Fehler beim Laden von cogs.{cog_name}: {str(e)}")
-                    import traceback
-                    logger.error(traceback.format_exc())
-        
-        logger.info(f"Geladene Cogs: {loaded_cogs}")
-        
-        # Synchronisiere die Slash Commands
-        try:
-            logger.info("Synchronisiere Slash Commands...")
-            # Warte kurz, um sicherzustellen, dass alle Cogs geladen sind
-            await asyncio.sleep(1)
-            
-            # Synchronisiere für jede Guild einzeln
-            for guild_id in DISCORD_GUILD_IDS:
-                guild = bot.get_guild(guild_id)
-                if guild:
-                    logger.info(f"Synchronisiere Commands für Guild: {guild.name} ({guild.id})")
-                    try:
-                        # Synchronisiere die Commands
-                        await bot.tree.sync(guild=guild)
-                        
-                        # Zeige die erfolgreich synchronisierten Commands
-                        logger.info(f"Erfolgreich synchronisierte Commands für {guild.name}:")
-                        for cmd in bot.tree.get_commands(guild=guild):
-                            logger.info(f"- {cmd.name}")
-                            if hasattr(cmd, 'commands'):
-                                for subcmd in cmd.commands:
-                                    logger.info(f"  └─ {subcmd.name}")
-                    except Exception as e:
-                        logger.error(f"Fehler bei der Synchronisation für Guild {guild.name}: {str(e)}")
-                        import traceback
-                        logger.error(traceback.format_exc())
-                else:
-                    logger.warning(f"Guild mit ID {guild_id} nicht gefunden!")
-
-            # Zeige finalen Status aller Commands
-            logger.info("\nFinaler Status aller registrierten Commands:")
-            for cmd in bot.tree.get_commands():
-                logger.info(f"- {cmd.name} (Typ: {type(cmd)})")
-                if hasattr(cmd, 'commands'):
-                    for subcmd in cmd.commands:
-                        logger.info(f"  └─ {subcmd.name}")
-                
-        except Exception as e:
-            logger.error(f"Fehler beim Synchronisieren der Slash Commands: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
-        
-        # Starte die Status-Rotation und den Daily Post Check
-        logger.info("Starte Tasks...")
-        change_status.start()
-        check_daily_post.start()
-        logger.info("Tasks gestartet")
-        
-    except Exception as e:
-        logger.error(f"Kritischer Fehler in on_ready: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
+async def main():
+    await load_cogs()
+    await bot.start(DISCORD_BOT_TOKEN)
 
 # Wenn das Skript direkt ausgeführt wird (nicht als Modul)
 if __name__ == "__main__":
@@ -284,4 +230,4 @@ if __name__ == "__main__":
         client.run(DISCORD_BOT_TOKEN)
     else:
         # Starte den Bot für Befehle und automatische Posts
-        bot.run(DISCORD_BOT_TOKEN)
+        asyncio.run(main())
