@@ -7,58 +7,56 @@ import subprocess
 from dotenv import load_dotenv
 
 class ImageCommands(commands.Cog):
+    """Image commands for the bot"""
     def __init__(self, bot):
         self.bot = bot
-        self.group = app_commands.Group(name="image", description="Bild-bezogene Befehle")
+        self._group = app_commands.Group(name="image", description="Bild-Befehle")
         # Lade die Channel-ID aus der .env
         load_dotenv('/app/.env')
         self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
-        
-        last_cmd = app_commands.Command(
-            name="last",
-            description="Zeigt das letzte aufgenommene Bild",
-            callback=self.last
-        )
-        last_cmd.guild_only = True
-        self.group.add_command(last_cmd)
-        bot.tree.add_command(self.group)
 
+    @property
+    def group(self) -> app_commands.Group:
+        return self._group
+
+    async def cog_load(self) -> None:
+        self.bot.tree.add_command(self._group)
+
+    @app_commands.command(name="last", description="Zeigt das letzte Bild an")
+    @app_commands.guild_only()
     async def last(self, interaction: discord.Interaction):
-        # Überprüfe, ob der Command im richtigen Channel verwendet wird
-        if interaction.channel_id != self.daily_channel_id:
-            await interaction.response.send_message(
-                "Dieser Command ist nur im Daily Channel verfügbar.",
+        try:
+            # Sende eine Bestätigungsnachricht
+            await interaction.response.defer()
+
+            # Hole das letzte Bild
+            image_dir = os.getenv('IMAGE_DIR', 'images')
+            files = glob.glob(os.path.join(image_dir, '*.jpg'))
+            if not files:
+                await interaction.followup.send(
+                    "Keine Bilder gefunden.",
+                    ephemeral=True
+                )
+                return
+
+            # Sortiere nach Änderungsdatum und nimm das neueste
+            latest_file = max(files, key=os.path.getmtime)
+            
+            # Überprüfe die Dateigröße
+            file_size = os.path.getsize(latest_file)
+            if file_size > 10 * 1024 * 1024:  # 10MB
+                # Verkleinere das Bild
+                subprocess.run(['convert', latest_file, '-resize', '50%', latest_file])
+
+            # Sende das Bild
+            await interaction.followup.send(
+                file=discord.File(latest_file)
+            )
+        except Exception as e:
+            await interaction.followup.send(
+                f"Fehler beim Abrufen des letzten Bildes: {str(e)}",
                 ephemeral=True
             )
-            return
-
-        try:
-            # Finde das neueste Bild im Screenshot-Verzeichnis
-            screenshot_dir = "/app/screenshots"
-            list_of_files = glob.glob(f"{screenshot_dir}/screenshot_*.png")
-            if not list_of_files:
-                await interaction.response.send_message("Keine Screenshots gefunden.", ephemeral=True)
-                return
-
-            latest_file = max(list_of_files, key=os.path.getctime)
-            
-            # Verkleinere das Bild, falls nötig
-            resized_file = self.resize_image(latest_file)
-            if not resized_file:
-                await interaction.response.send_message("Fehler beim Verkleinern des Bildes.", ephemeral=True)
-                return
-            
-            # Sende das Bild
-            with open(resized_file, 'rb') as f:
-                await interaction.response.send_message(file=discord.File(f))
-            print(f"Letztes Bild erfolgreich an Discord gesendet: {resized_file}")
-            
-            # Lösche die temporäre Datei, falls eine erstellt wurde
-            if resized_file != latest_file:
-                os.remove(resized_file)
-        except Exception as e:
-            await interaction.response.send_message(f"Fehler beim Senden des Bildes: {str(e)}", ephemeral=True)
-            print(f"Fehler beim Senden des letzten Bildes: {str(e)}")
 
     def resize_image(self, input_file):
         """Verkleinert ein Bild, falls es größer als 10MB ist"""
@@ -90,5 +88,7 @@ class ImageCommands(commands.Cog):
         return input_file
 
 async def setup(bot):
-    await bot.add_cog(ImageCommands(bot))
+    cog = ImageCommands(bot)
+    cog.group.add_command(cog.last)
+    await bot.add_cog(cog)
     print("Image-Commands wurden registriert") 

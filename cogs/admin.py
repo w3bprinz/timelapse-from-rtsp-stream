@@ -5,18 +5,20 @@ import os
 from dotenv import load_dotenv
 
 class AdminCommands(commands.Cog):
+    """Admin commands for the bot"""
     def __init__(self, bot):
         self.bot = bot
-        self.group = app_commands.Group(name="admin", description="Admin-Befehle")
-        purge_cmd = app_commands.Command(
-            name="purge",
-            description="Löscht alle Nachrichten im aktuellen Channel",
-            callback=self.purge
-        )
-        purge_cmd.guild_only = True
-        self.group.add_command(purge_cmd)
-        bot.tree.add_command(self.group)
+        self._group = app_commands.Group(name="admin", description="Admin-Befehle")
 
+    @property
+    def group(self) -> app_commands.Group:
+        return self._group
+
+    async def cog_load(self) -> None:
+        self.bot.tree.add_command(self._group)
+
+    @app_commands.command(name="purge", description="Löscht alle Nachrichten im aktuellen Channel")
+    @app_commands.guild_only()
     @app_commands.checks.has_permissions(administrator=True)
     async def purge(self, interaction: discord.Interaction):
         # Überprüfe, ob der Benutzer der Bot-Owner ist
@@ -46,7 +48,7 @@ class AdminCommands(commands.Cog):
                 ephemeral=True
             )
 
-    @app_commands.checks.has_permissions(administrator=True)
+    @purge.error
     async def purge_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.errors.MissingPermissions):
             await interaction.response.send_message(
@@ -55,5 +57,7 @@ class AdminCommands(commands.Cog):
             )
 
 async def setup(bot):
-    await bot.add_cog(AdminCommands(bot))
+    cog = AdminCommands(bot)
+    cog.group.add_command(cog.purge)
+    await bot.add_cog(cog)
     print("Admin-Commands wurden registriert") 
