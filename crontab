@@ -3,5 +3,3 @@
 
 # Timelapse-Video erstellen und senden um Mitternacht
 0 0 * * * /app/screenshot_script.sh timelapse >> /var/log/screenshot.log 2>&1
-
-@reboot /usr/local/bin/python3 /app/post_to_discord.py >> /var/log/discord_bot.log 2>&1

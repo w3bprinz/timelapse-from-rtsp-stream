@@ -151,7 +151,7 @@ async def on_ready():
         
         # Debug: Zeige verfügbare Cogs
         logger.info("Verfügbare Cogs im Verzeichnis:")
-        cogs_dir = './cogs'
+        cogs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cogs')
         if not os.path.exists(cogs_dir):
             logger.error(f"FEHLER: Verzeichnis {cogs_dir} existiert nicht!")
             return
