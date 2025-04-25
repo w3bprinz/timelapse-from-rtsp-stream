@@ -10,7 +10,7 @@ class ImageCommands(commands.Cog):
     """Image commands for the bot"""
     def __init__(self, bot):
         self.bot = bot
-        self._group = app_commands.Group(name="image", description="Bild-Befehle")
+        self._group = app_commands.Group(name="image", description="Bild-Befehle", guild_only=True)
         # Lade die Channel-ID aus der .env
         load_dotenv('/app/.env')
         self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
@@ -19,8 +19,10 @@ class ImageCommands(commands.Cog):
     def group(self) -> app_commands.Group:
         return self._group
 
-    @app_commands.command(name="last", description="Zeigt das letzte Bild an")
-    @app_commands.guild_only()
+    async def cog_load(self) -> None:
+        self.bot.tree.add_command(self._group)
+
+    @group.command(name="last", description="Zeigt das letzte Bild an")
     async def last(self, interaction: discord.Interaction):
         try:
             # Sende eine Bestätigungsnachricht
@@ -86,6 +88,5 @@ class ImageCommands(commands.Cog):
 
 async def setup(bot):
     cog = ImageCommands(bot)
-    cog.group.add_command(cog.last)
     await bot.add_cog(cog)
     print("Image-Commands wurden registriert") 

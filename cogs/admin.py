@@ -8,14 +8,16 @@ class AdminCommands(commands.Cog):
     """Admin commands for the bot"""
     def __init__(self, bot):
         self.bot = bot
-        self._group = app_commands.Group(name="admin", description="Admin-Befehle")
+        self._group = app_commands.Group(name="admin", description="Admin-Befehle", guild_only=True)
 
     @property
     def group(self) -> app_commands.Group:
         return self._group
 
-    @app_commands.command(name="purge", description="Löscht alle Nachrichten im aktuellen Channel")
-    @app_commands.guild_only()
+    async def cog_load(self) -> None:
+        self.bot.tree.add_command(self._group)
+
+    @group.command(name="purge", description="Löscht alle Nachrichten im aktuellen Channel")
     @app_commands.checks.has_permissions(administrator=True)
     async def purge(self, interaction: discord.Interaction):
         # Überprüfe, ob der Benutzer der Bot-Owner ist
@@ -55,6 +57,5 @@ class AdminCommands(commands.Cog):
 
 async def setup(bot):
     cog = AdminCommands(bot)
-    cog.group.add_command(cog.purge)
     await bot.add_cog(cog)
     print("Admin-Commands wurden registriert") 
