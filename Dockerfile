@@ -32,8 +32,13 @@ RUN chmod +x /app/screenshot_script.sh
 
 # Erstelle Cron-Jobs
 RUN echo "*/5 * * * * /app/screenshot_script.sh >> /var/log/screenshot.log 2>&1" > /etc/cron.d/timelapse_cron && \
-    echo "@reboot /usr/local/bin/python3 /app/post_to_discord.py >> /var/log/discord_bot.log 2>&1" >> /etc/cron.d/timelapse_cron && \
     chmod 0644 /etc/cron.d/timelapse_cron
 
-# Starte Cron im Vordergrund
-CMD ["cron", "-f"]
+# Erstelle Start-Skript
+RUN echo '#!/bin/bash\n\
+python3 /app/post_to_discord.py >> /var/log/discord_bot.log 2>&1 &\n\
+cron -f' > /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Starte beide Dienste
+CMD ["/app/start.sh"]
