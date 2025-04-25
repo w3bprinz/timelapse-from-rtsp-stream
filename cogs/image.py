@@ -3,14 +3,28 @@ from discord import app_commands
 import glob
 import os
 import subprocess
+from dotenv import load_dotenv
 
-class Commands(app_commands.Group):
+class ImageCommands(app_commands.Group):
     def __init__(self, bot):
         super().__init__(name="image", description="Bild-bezogene Befehle")
         self.bot = bot
+        # Lade die .env Datei
+        load_dotenv('/app/.env')
+        # Hole die Channel-ID aus der .env
+        self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
 
     @app_commands.command(name="last", description="Zeigt das letzte aufgenommene Bild")
+    @app_commands.guild_only()
     async def last(self, interaction: discord.Interaction):
+        # Überprüfe, ob der Command im richtigen Channel verwendet wird
+        if interaction.channel_id != self.daily_channel_id:
+            await interaction.response.send_message(
+                "Dieser Command ist nur im Daily Channel verfügbar.",
+                ephemeral=True
+            )
+            return
+
         try:
             # Finde das neueste Bild im Screenshot-Verzeichnis
             screenshot_dir = "/app/screenshots"
@@ -69,5 +83,5 @@ class Commands(app_commands.Group):
         return input_file
 
 async def setup(bot):
-    commands = Commands(bot)
+    commands = ImageCommands(bot)
     bot.tree.add_command(commands) 
