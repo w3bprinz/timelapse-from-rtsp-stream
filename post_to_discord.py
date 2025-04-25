@@ -202,15 +202,12 @@ async def on_ready():
                         # Synchronisiere die Commands
                         await bot.tree.sync(guild=guild)
                         
-                        # Hole die tatsächlich synchronisierten Commands
-                        commands = await bot.tree.fetch_commands(guild=guild)
-                        
                         # Zeige die erfolgreich synchronisierten Commands
                         logger.info(f"Erfolgreich synchronisierte Commands für {guild.name}:")
-                        for cmd in commands:
+                        for cmd in bot.tree.get_commands(guild=guild):
                             logger.info(f"- {cmd.name}")
-                            if isinstance(cmd, discord.app_commands.Group):
-                                for subcmd in await cmd.fetch_commands():
+                            if hasattr(cmd, 'commands'):
+                                for subcmd in cmd.commands:
                                     logger.info(f"  └─ {subcmd.name}")
                     except Exception as e:
                         logger.error(f"Fehler bei der Synchronisation für Guild {guild.name}: {str(e)}")
