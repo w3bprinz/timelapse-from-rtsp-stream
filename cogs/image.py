@@ -14,12 +14,13 @@ class ImageCommands(commands.Cog):
         load_dotenv('/app/.env')
         self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
         
-        self.group.add_command(app_commands.Command(
+        last_cmd = app_commands.Command(
             name="last",
             description="Zeigt das letzte aufgenommene Bild",
-            callback=self.last,
-            guild_only=True
-        ))
+            callback=self.last
+        )
+        last_cmd.guild_only = True
+        self.group.add_command(last_cmd)
         bot.tree.add_command(self.group)
 
     async def last(self, interaction: discord.Interaction):
