@@ -4,7 +4,7 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 
-class AdminCommands(app_commands.Group):
+class AdminCommands(app_commands.Group, name="admin"):
     def __init__(self, bot):
         # Lade die Guild IDs aus der .env
         load_dotenv('/app/.env')
@@ -57,6 +57,5 @@ class AdminCommands(app_commands.Group):
             )
 
 async def setup(bot):
-    command_group = AdminCommands(bot)
-    bot.tree.add_command(command_group)
-    print(f"Admin-Commands wurden registriert") 
+    await bot.add_cog(AdminCommands(bot))
+    print("Admin-Commands wurden registriert") 
