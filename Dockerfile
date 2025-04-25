@@ -1,5 +1,8 @@
 FROM python:3.9-slim
 
+# Setze Python auf unbuffered
+ENV PYTHONUNBUFFERED=1
+
 # Installiere Abhängigkeiten
 RUN apt-get update && apt-get install -y \
     ffmpeg \
