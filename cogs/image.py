@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import glob
 import os
@@ -13,15 +14,20 @@ class ImageCommands(commands.Cog):
         load_dotenv('/app/.env')
         self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
 
-    @commands.command(name="last")
-    async def last(self, ctx):
-        """Zeigt das letzte aufgenommene Bild."""
+    @app_commands.command(name="last", description="Zeigt das letzte aufgenommene Bild")
+    @app_commands.guild_only()
+    async def last(self, interaction: discord.Interaction):
         try:
+            await interaction.response.defer()
+
             # Hole das letzte Bild
             image_dir = os.getenv('IMAGE_DIR', 'images')
             files = glob.glob(os.path.join(image_dir, '*.jpg'))
             if not files:
-                await ctx.send("Keine Bilder gefunden.", ephemeral=True)
+                await interaction.followup.send(
+                    "Keine Bilder gefunden.",
+                    ephemeral=True
+                )
                 return
 
             # Sortiere nach Änderungsdatum und nimm das neueste
@@ -34,9 +40,14 @@ class ImageCommands(commands.Cog):
                 subprocess.run(['convert', latest_file, '-resize', '50%', latest_file])
 
             # Sende das Bild
-            await ctx.send(file=discord.File(latest_file))
+            await interaction.followup.send(
+                file=discord.File(latest_file)
+            )
         except Exception as e:
-            await ctx.send(f"Fehler beim Abrufen des letzten Bildes: {str(e)}", ephemeral=True)
+            await interaction.followup.send(
+                f"Fehler beim Abrufen des letzten Bildes: {str(e)}",
+                ephemeral=True
+            )
 
     def resize_image(self, input_file):
         """Verkleinert ein Bild, falls es größer als 10MB ist"""
