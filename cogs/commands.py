@@ -1,15 +1,15 @@
 import discord
-from discord.ext import commands
 from discord import app_commands
 import glob
 import os
+import subprocess
 
-class LastImageCog(commands.Cog):
+class Commands(app_commands.Group):
     def __init__(self, bot):
+        super().__init__(name="image", description="Bild-bezogene Befehle")
         self.bot = bot
 
     @app_commands.command(name="last", description="Zeigt das letzte aufgenommene Bild")
-    @app_commands.guild_only()
     async def last(self, interaction: discord.Interaction):
         try:
             # Finde das neueste Bild im Screenshot-Verzeichnis
@@ -41,7 +41,6 @@ class LastImageCog(commands.Cog):
 
     def resize_image(self, input_file):
         """Verkleinert ein Bild, falls es größer als 10MB ist"""
-        import subprocess
         max_size_mb = 10
         size_mb = int(subprocess.check_output(['du', '-m', input_file]).split()[0].decode('utf-8'))
         
@@ -70,11 +69,5 @@ class LastImageCog(commands.Cog):
         return input_file
 
 async def setup(bot):
-    await bot.add_cog(LastImageCog(bot))
-    # Registriere die Slash Commands für alle Guilds
-    for guild in bot.guilds:
-        try:
-            await bot.tree.sync(guild=guild)
-            print(f"Slash Commands für Guild {guild.name} synchronisiert")
-        except Exception as e:
-            print(f"Fehler beim Synchronisieren der Slash Commands für Guild {guild.name}: {str(e)}") 
+    commands = Commands(bot)
+    bot.tree.add_command(commands) 
