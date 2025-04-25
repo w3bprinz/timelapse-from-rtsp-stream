@@ -7,8 +7,12 @@ class AdminCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def cog_load(self) -> None:
+        # Registriere den Command für jede Guild
+        for guild_id in self.bot.guilds:
+            self.bot.tree.add_command(self.purge, guild=guild_id)
+
     @app_commands.command(name="purge", description="Löscht Nachrichten im aktuellen Channel")
-    @app_commands.guild_only()
     @app_commands.checks.has_permissions(administrator=True)
     async def purge(self, interaction: discord.Interaction, amount: int = None):
         if interaction.user.id != self.bot.owner_id:

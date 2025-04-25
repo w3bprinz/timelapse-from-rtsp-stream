@@ -14,8 +14,12 @@ class ImageCommands(commands.Cog):
         load_dotenv('/app/.env')
         self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
 
+    async def cog_load(self) -> None:
+        # Registriere den Command für jede Guild
+        for guild_id in self.bot.guilds:
+            self.bot.tree.add_command(self.last, guild=guild_id)
+
     @app_commands.command(name="last", description="Zeigt das letzte aufgenommene Bild")
-    @app_commands.guild_only()
     async def last(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
