@@ -43,7 +43,7 @@ RUN chmod 0644 /etc/cron.d/timelapse_cron && \
 # Erstelle Start-Skript
 RUN echo '#!/bin/bash\n\
 # Starte den Discord Bot im Hintergrund\n\
-python3 /app/post_to_discord.py >> /var/log/discord_bot.log 2>&1 &\n\
+python3 /app/post_to_discord.py &\n\
 \n\
 # Starte den Cron-Dienst\n\
 cron -f' > /app/start.sh && \

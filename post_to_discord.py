@@ -8,24 +8,14 @@ from dotenv import load_dotenv
 import subprocess
 import logging
 
-# Konfiguriere Logging
+# Grundlegende Logging-Konfiguration
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('/var/log/discord_bot.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# Konfiguriere Discord Logger
-discord_logger = logging.getLogger('discord')
-discord_logger.setLevel(logging.INFO)
-discord_logger.addHandler(logging.FileHandler('/var/log/discord_bot.log'))
-discord_logger.addHandler(logging.StreamHandler(sys.stdout))
-
 # Erstelle Logger für dieses Modul
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 # Füge den Python-Pfad hinzu
 sys.path.append('/usr/local/lib/python3.9/site-packages')
