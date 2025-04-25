@@ -1,99 +1,76 @@
-# Timelapse from RTSP Stream
+# Timelapse Generator mit Discord Integration
 
-Ein Docker-basiertes System zur Erstellung von Timelapse-Videos aus einem RTSP-Stream mit automatischer Veröffentlichung in Discord.
+Dieses Projekt erstellt Timelapses aus einem RTSP-Stream und integriert einen Discord Bot für Benachrichtigungen und Bildverwaltung.
 
 ## Features
 
-- Automatische Screenshots in regelmäßigen Abständen
-- Erstellung von Timelapse-Videos
-- Automatische Veröffentlichung in Discord
-- Spezielle Posts um 8:00 und 20:00 Uhr
-- Discord-Bot mit Befehlen und Status-Rotation
-- Automatische Bildverkleinerung für Discord
-
-## Voraussetzungen
-
-- Docker
-- RTSP-Stream URL
-- Discord Bot Token
-- Discord Channel IDs
+- Automatische Screenshot-Erstellung aus RTSP-Stream
+- Discord Bot Integration:
+  - `/image last` - Zeigt das letzte aufgenommene Bild (nur im Daily Channel verfügbar)
+  - `/purge` - Löscht alle Nachrichten in einem Channel (nur für Bot-Owner)
+  - Automatische Daily Posts (8:00 und 20:00 Uhr)
+  - Status Rotation mit verschiedenen Aktivitäten
+- Automatische Bildkomprimierung für Discord-Uploads
+- Detailliertes Logging
 
 ## Installation
 
-1. Klone das Repository:
+1. Repository klonen:
 
 ```bash
 git clone https://github.com/w3bprinz/timelapse-from-rtsp-stream.git
 cd timelapse-from-rtsp-stream
 ```
 
-2. Erstelle eine `.env` Datei basierend auf `.env.example`:
-
-```bash
-cp .env.example .env
-```
-
-3. Bearbeite die `.env` Datei mit deinen Einstellungen:
+2. `.env` Datei erstellen:
 
 ```env
-# RTSP Stream URL
-RTSP_URL=rtsp://your-stream-url
-
-# Discord Konfiguration
-DISCORD_BOT_TOKEN=your_bot_token
-DISCORD_CHANNEL_ID=your_channel_id
-DISCORD_DAILY_CHANNEL_ID=your_daily_channel_id
-
-# Verzeichnisse
-SCREENSHOT_DIR=/app/screenshots
-TIMELAPSE_DIR=/app/timelapse
-
-# Video Einstellungen
-MAX_VIDEO_SIZE_MB=50
+DISCORD_BOT_TOKEN=dein_bot_token
+DISCORD_CHANNEL_ID=dein_channel_id
+DISCORD_DAILY_CHANNEL_ID=daily_channel_id
 ```
 
-4. Starte den Container:
+3. Docker Image bauen:
 
 ```bash
-docker build -t timelapse-rtsp .
-docker run -d --name timelapse-rtsp -v $(pwd)/.env:/app/.env timelapse-rtsp
+docker build -t ghcr.io/w3bprinz/timelapse-from-rtsp-stream:latest .
 ```
 
-## Discord Bot Befehle
+4. Container starten:
 
-Der Bot unterstützt folgende Befehle:
+```bash
+docker run -d \
+  --name timelapse-generator \
+  -v /pfad/zu/.env:/app/.env \
+  ghcr.io/w3bprinz/timelapse-from-rtsp-stream:latest
+```
 
-- `!last` - Sendet das letzte aufgenommene Bild in den Kanal
+## Discord Bot Einrichtung
 
-Der Bot zeigt auch einen rotierenden Status mit folgenden Meldungen:
-
-- 🌱 Pflanzenwachstum überwachen
-- 📸 Screenshots aufnehmen
-- ⏱️ Timelapse erstellen
-- 🌿 Daily Weed Pictures
-- 📊 Wachstumsstatistiken
-
-## Automatische Posts
-
-- Screenshots werden alle 5 Minuten erstellt
-- Timelapse-Videos werden täglich erstellt
-- Spezielle Posts werden um 8:00 und 20:00 Uhr im Daily Channel veröffentlicht
-- Alle Bilder werden automatisch verkleinert, falls sie größer als 10MB sind
+1. Erstelle einen neuen Bot im [Discord Developer Portal](https://discord.com/developers/applications)
+2. Aktiviere die folgenden Intents:
+   - Message Content Intent
+   - Server Members Intent
+3. Lade den Bot mit den folgenden Berechtigungen ein:
+   - `bot`
+   - `applications.commands`
+4. Benötigte Bot-Berechtigungen:
+   - Nachrichten senden
+   - Dateien anhängen
+   - Nachrichten verwalten (für purge)
 
 ## Logs
 
-Die Logs des Containers können mit folgendem Befehl eingesehen werden:
+Die Logs des Bots werden in `/var/log/discord_bot.log` gespeichert und sind auch in der Unraid-Konsole sichtbar.
 
-```bash
-docker logs timelapse-rtsp
-```
+## Entwicklung
 
-Die Discord-Bot Logs befinden sich in:
+- Python 3.9+
+- discord.py 2.0+
+- FFmpeg für Bildkomprimierung
 
-```bash
-docker exec timelapse-rtsp cat /var/log/discord_bot.log
-```
+Siehe [CHANGELOG.md](CHANGELOG.md) für die Versionshistorie.
 
 ## Lizenz
 
-MIT
+MIT License - siehe [LICENSE](LICENSE) für Details.
