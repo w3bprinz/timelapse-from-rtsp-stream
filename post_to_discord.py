@@ -146,33 +146,71 @@ def resize_image(input_file):
 
 @bot.event
 async def on_ready():
-    print(f'Bot ist eingeloggt als {bot.user.name}')
-    
-    # Lade alle Cogs
-    cogs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cogs')
-    for filename in os.listdir(cogs_dir):
-        if filename.endswith('.py'):
-            try:
-                await bot.load_extension(f'cogs.{filename[:-3]}')
-                print(f'Cog {filename} erfolgreich geladen')
-            except Exception as e:
-                print(f'Fehler beim Laden von {filename}: {str(e)}')
-    
-    # Synchronisiere die Slash Commands für alle Guilds
     try:
-        # Synchronisiere global
-        await bot.tree.sync()
-        print("Globale Slash Commands synchronisiert")
+        logger.info(f'Bot ist eingeloggt als {bot.user.name}')
         
-        # Synchronisiere für jede Guild
-        for guild in bot.guilds:
-            try:
-                await bot.tree.sync(guild=guild)
-                print(f"Slash Commands für Guild {guild.name} synchronisiert")
-            except Exception as e:
-                print(f"Fehler beim Synchronisieren für Guild {guild.name}: {str(e)}")
+        # Debug: Zeige verfügbare Cogs
+        logger.info("Verfügbare Cogs im Verzeichnis:")
+        cogs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cogs')
+        if not os.path.exists(cogs_dir):
+            logger.error(f"FEHLER: Verzeichnis {cogs_dir} existiert nicht!")
+            return
+            
+        for filename in os.listdir(cogs_dir):
+            logger.info(f"- {filename}")
+        
+        # Lade alle Cogs
+        loaded_cogs = []
+        for filename in os.listdir(cogs_dir):
+            if filename.endswith('.py') and not filename.startswith('__'):
+                cog_name = filename[:-3]
+                try:
+                    logger.info(f"Versuche cogs.{cog_name} zu laden...")
+                    await bot.load_extension(f'cogs.{cog_name}')
+                    loaded_cogs.append(cog_name)
+                    logger.info(f"Erfolgreich geladen: cogs.{cog_name}")
+                except Exception as e:
+                    logger.error(f"Fehler beim Laden von cogs.{cog_name}: {str(e)}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+        
+        logger.info(f"Geladene Cogs: {loaded_cogs}")
+        
+        # Synchronisiere die Slash Commands
+        try:
+            logger.info("Synchronisiere Slash Commands...")
+            # Warte kurz, um sicherzustellen, dass alle Cogs geladen sind
+            await asyncio.sleep(1)
+            
+            # Synchronisiere für alle Guilds
+            for guild in bot.guilds:
+                try:
+                    logger.info(f"Synchronisiere Commands für Guild: {guild.name} ({guild.id})")
+                    await bot.tree.sync(guild=guild)
+                    logger.info(f"Commands für Guild {guild.name} synchronisiert")
+                except Exception as e:
+                    logger.error(f"Fehler beim Synchronisieren der Guild {guild.id}: {str(e)}")
+            
+            # Synchronisiere auch global
+            synced = await bot.tree.sync()
+            logger.info(f"Global synchronisierte {len(synced)} Slash Commands")
+            for cmd in synced:
+                logger.info(f"- {cmd.name}")
+        except Exception as e:
+            logger.error(f"Fehler beim Synchronisieren der Slash Commands: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+        
+        # Starte die Status-Rotation und den Daily Post Check
+        logger.info("Starte Tasks...")
+        change_status.start()
+        check_daily_post.start()
+        logger.info("Tasks gestartet")
+        
     except Exception as e:
-        print(f"Fehler beim Synchronisieren der Slash Commands: {str(e)}")
+        logger.error(f"Kritischer Fehler in on_ready: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
 
 # Wenn das Skript direkt ausgeführt wird (nicht als Modul)
 if __name__ == "__main__":
