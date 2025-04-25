@@ -6,7 +6,11 @@ class AdminCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="purge", description="Löscht alle Nachrichten im aktuellen Channel")
+    @app_commands.command(
+        name="purge",
+        description="Löscht alle Nachrichten im aktuellen Channel",
+        default_permissions=discord.Permissions(administrator=True)
+    )
     @app_commands.guild_only()
     async def purge(self, interaction: discord.Interaction):
         # Überprüfe, ob der Benutzer der Bot-Owner ist
