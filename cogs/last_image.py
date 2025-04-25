@@ -9,6 +9,7 @@ class LastImageCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="last", description="Zeigt das letzte aufgenommene Bild")
+    @app_commands.guild_only()
     async def last(self, interaction: discord.Interaction):
         try:
             # Finde das neueste Bild im Screenshot-Verzeichnis
@@ -69,4 +70,11 @@ class LastImageCog(commands.Cog):
         return input_file
 
 async def setup(bot):
-    await bot.add_cog(LastImageCog(bot)) 
+    await bot.add_cog(LastImageCog(bot))
+    # Registriere die Slash Commands für alle Guilds
+    for guild in bot.guilds:
+        try:
+            await bot.tree.sync(guild=guild)
+            print(f"Slash Commands für Guild {guild.name} synchronisiert")
+        except Exception as e:
+            print(f"Fehler beim Synchronisieren der Slash Commands für Guild {guild.name}: {str(e)}") 
