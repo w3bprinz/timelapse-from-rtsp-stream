@@ -9,33 +9,27 @@ import subprocess
 import logging
 
 # Konfiguriere Logging
-class StreamToLogger:
-    def __init__(self, logger, level):
-        self.logger = logger
-        self.level = level
-        self.linebuf = ''
+class DockerFormatter(logging.Formatter):
+    def format(self, record):
+        # Entferne Zeilenumbrüche, damit jeder Log eine einzelne Zeile ist
+        record.msg = record.msg.replace('\n', ' ')
+        return super().format(record)
 
-    def write(self, buf):
-        for line in buf.rstrip().splitlines():
-            self.logger.log(self.level, line.rstrip())
-    
-    def flush(self):
-        pass
+# Erstelle Handler für Docker-Logs (stdout) und Datei
+docker_handler = logging.StreamHandler(sys.stdout)
+docker_handler.setFormatter(DockerFormatter('%(asctime)s - %(levelname)s - %(message)s'))
 
-# Logging Konfiguration
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('/var/log/discord_bot.log')
-    ]
-)
+file_handler = logging.FileHandler('/var/log/discord_bot.log')
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
-# Leite stdout und stderr um
+# Konfiguriere Root-Logger
+logging.basicConfig(level=logging.INFO, handlers=[docker_handler, file_handler])
+
+# Erstelle Logger für dieses Modul
 logger = logging.getLogger(__name__)
-sys.stdout = StreamToLogger(logger, logging.INFO)
-sys.stderr = StreamToLogger(logger, logging.ERROR)
+
+# Verhindere Propagierung zu Root-Logger um doppelte Logs zu vermeiden
+logger.propagate = False
 
 # Füge den Python-Pfad hinzu
 sys.path.append('/usr/local/lib/python3.9/site-packages')
