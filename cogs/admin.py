@@ -1,9 +1,9 @@
 import discord
 from discord import app_commands
+from discord.ext import commands
 
-class AdminCommands(app_commands.Group):
+class AdminCog(commands.Cog):
     def __init__(self, bot):
-        super().__init__(name="admin", description="Admin-Befehle")
         self.bot = bot
 
     @app_commands.command(name="purge", description="Löscht alle Nachrichten im aktuellen Channel")
@@ -37,5 +37,4 @@ class AdminCommands(app_commands.Group):
             )
 
 async def setup(bot):
-    commands = AdminCommands(bot)
-    bot.tree.add_command(commands) 
+    await bot.add_cog(AdminCog(bot)) 
