@@ -9,7 +9,7 @@ import os
 load_dotenv('/app/.env')
 DISCORD_GUILD_IDS = [int(guild_id.strip()) for guild_id in os.getenv('DISCORD_GUILD_IDS', '').split(',') if guild_id.strip()]
 
-class AdminCommands(commands.Cog):
+class Admin(commands.Cog):
     """Admin commands for the bot"""
     def __init__(self, bot):
         self.bot = bot
@@ -24,13 +24,6 @@ class AdminCommands(commands.Cog):
         try:
             await interaction.response.defer(ephemeral=True)
             
-            if not interaction.user.guild_permissions.administrator:
-                await interaction.followup.send(
-                    "Du benötigst Administrator-Rechte für diesen Befehl.",
-                    ephemeral=True
-                )
-                return
-
             total_deleted = 0
             batch_size = 50  # Anzahl der Nachrichten pro Batch
             
@@ -69,6 +62,72 @@ class AdminCommands(commands.Cog):
                 ephemeral=True
             )
 
+    @app_commands.command(
+        name="status",
+        description="Zeigt den aktuellen Status des Bots"
+    )
+    @app_commands.guilds(*[discord.Object(id=guild_id) for guild_id in DISCORD_GUILD_IDS])
+    @app_commands.checks.has_permissions(administrator=True)
+    async def status(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        
+        embed = discord.Embed(
+            title="Bot Status",
+            description="Aktuelle Informationen über den Bot",
+            color=discord.Color.blue()
+        )
+        
+        embed.add_field(
+            name="Bot Name",
+            value=self.bot.user.name,
+            inline=True
+        )
+        embed.add_field(
+            name="Bot ID",
+            value=self.bot.user.id,
+            inline=True
+        )
+        
+        embed.add_field(
+            name="Server",
+            value=interaction.guild.name,
+            inline=True
+        )
+        embed.add_field(
+            name="Server ID",
+            value=interaction.guild.id,
+            inline=True
+        )
+        
+        embed.add_field(
+            name="Latenz",
+            value=f"{round(self.bot.latency * 1000)}ms",
+            inline=True
+        )
+        
+        embed.add_field(
+            name="Umgebungsvariablen",
+            value=f"SCREENSHOT_INTERVAL: {os.getenv('SCREENSHOT_INTERVAL', 'Nicht gesetzt')}\n"
+                  f"SCREENSHOT_DIR: {os.getenv('SCREENSHOT_DIR', 'Nicht gesetzt')}\n"
+                  f"TIMELAPSE_DIR: {os.getenv('TIMELAPSE_DIR', 'Nicht gesetzt')}\n"
+                  f"MAX_VIDEO_SIZE_MB: {os.getenv('MAX_VIDEO_SIZE_MB', 'Nicht gesetzt')}",
+            inline=False
+        )
+        
+        await interaction.followup.send(embed=embed)
+
+    @app_commands.command(
+        name="restart",
+        description="Startet den Bot neu"
+    )
+    @app_commands.guilds(*[discord.Object(id=guild_id) for guild_id in DISCORD_GUILD_IDS])
+    @app_commands.checks.has_permissions(administrator=True)
+    async def restart(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        
+        await interaction.followup.send("Bot wird neu gestartet...")
+        await self.bot.close()
+
 async def setup(bot):
-    await bot.add_cog(AdminCommands(bot))
+    await bot.add_cog(Admin(bot))
     print("Admin-Commands wurden geladen") 
