@@ -13,6 +13,7 @@ class Admin(commands.Cog):
     """Admin commands for the bot"""
     def __init__(self, bot):
         self.bot = bot
+        self.tree = bot.tree
 
     @app_commands.command(
         name="purge",
