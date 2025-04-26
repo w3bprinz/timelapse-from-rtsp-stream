@@ -75,6 +75,10 @@ async def on_ready():
         # Warte kurz, damit die Cogs vollständig geladen sind
         await asyncio.sleep(1)
         
+        # Entferne zuerst alle bestehenden Commands
+        bot.tree.clear_commands(guild=None)
+        logger.info("Alle bestehenden Commands wurden entfernt")
+        
         # Synchronisiere Commands global
         synced = await bot.tree.sync()
         logger.info(f"Synchronisierte {len(synced)} Commands global")
