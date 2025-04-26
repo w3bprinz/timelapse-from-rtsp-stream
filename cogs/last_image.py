@@ -14,7 +14,6 @@ DISCORD_GUILD_IDS = [int(guild_id.strip()) for guild_id in os.getenv('DISCORD_GU
 class LastImage(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.tree = bot.tree
         self.screenshot_dir = "/app/screenshots"
 
     def resize_image(self, input_file):

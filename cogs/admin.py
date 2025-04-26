@@ -2,18 +2,16 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import asyncio
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
 # Lade Umgebungsvariablen
 load_dotenv('/app/.env')
 DISCORD_GUILD_IDS = [int(guild_id.strip()) for guild_id in os.getenv('DISCORD_GUILD_IDS', '').split(',') if guild_id.strip()]
 
 class Admin(commands.Cog):
-    """Admin commands for the bot"""
     def __init__(self, bot):
         self.bot = bot
-        self.tree = bot.tree
 
     @app_commands.command(
         name="purge",
