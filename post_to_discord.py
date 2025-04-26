@@ -76,7 +76,7 @@ async def on_ready():
     logger.info(f'Bot ist eingeloggt als {bot.user.name}')
     try:
         # Warte kurz, damit die Cogs vollständig geladen sind
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
         
         # Entferne zuerst alle bestehenden Commands
         bot.tree.clear_commands(guild=None)
@@ -129,7 +129,7 @@ async def load_cogs():
                 logger.info(f"Erfolgreich geladen: cogs.{filename[:-3]}")
                 
                 # Warte kurz, damit die Commands registriert werden können
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1)
             except Exception as e:
                 logger.error(f"Fehler beim Laden von cogs.{filename[:-3]}: {str(e)}")
                 logger.error(f"Details: {e.__class__.__name__}: {str(e)}")
