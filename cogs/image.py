@@ -1,5 +1,4 @@
 import discord
-from discord import app_commands
 from discord.ext import commands
 import glob
 import os
@@ -15,43 +14,44 @@ class ImageCommands(commands.Cog):
         self.daily_channel_id = int(os.getenv('DISCORD_DAILY_CHANNEL_ID'))
 
     async def cog_load(self) -> None:
-        # Registriere den Command für jede Guild
-        for guild_id in self.bot.guilds:
-            self.bot.tree.add_command(self.last, guild=guild_id)
+        # Registriere den Command direkt im Command-Tree
+        @self.bot.tree.command(
+            name="last",
+            description="Zeigt das letzte aufgenommene Bild",
+            guild_only=True
+        )
+        async def last(interaction: discord.Interaction):
+            try:
+                await interaction.response.defer()
 
-    @app_commands.command(name="last", description="Zeigt das letzte aufgenommene Bild")
-    async def last(self, interaction: discord.Interaction):
-        try:
-            await interaction.response.defer()
+                # Hole das letzte Bild
+                image_dir = os.getenv('IMAGE_DIR', 'images')
+                files = glob.glob(os.path.join(image_dir, '*.jpg'))
+                if not files:
+                    await interaction.followup.send(
+                        "Keine Bilder gefunden.",
+                        ephemeral=True
+                    )
+                    return
 
-            # Hole das letzte Bild
-            image_dir = os.getenv('IMAGE_DIR', 'images')
-            files = glob.glob(os.path.join(image_dir, '*.jpg'))
-            if not files:
+                # Sortiere nach Änderungsdatum und nimm das neueste
+                latest_file = max(files, key=os.path.getmtime)
+                
+                # Überprüfe die Dateigröße
+                file_size = os.path.getsize(latest_file)
+                if file_size > 10 * 1024 * 1024:  # 10MB
+                    # Verkleinere das Bild
+                    subprocess.run(['convert', latest_file, '-resize', '50%', latest_file])
+
+                # Sende das Bild
                 await interaction.followup.send(
-                    "Keine Bilder gefunden.",
+                    file=discord.File(latest_file)
+                )
+            except Exception as e:
+                await interaction.followup.send(
+                    f"Fehler beim Abrufen des letzten Bildes: {str(e)}",
                     ephemeral=True
                 )
-                return
-
-            # Sortiere nach Änderungsdatum und nimm das neueste
-            latest_file = max(files, key=os.path.getmtime)
-            
-            # Überprüfe die Dateigröße
-            file_size = os.path.getsize(latest_file)
-            if file_size > 10 * 1024 * 1024:  # 10MB
-                # Verkleinere das Bild
-                subprocess.run(['convert', latest_file, '-resize', '50%', latest_file])
-
-            # Sende das Bild
-            await interaction.followup.send(
-                file=discord.File(latest_file)
-            )
-        except Exception as e:
-            await interaction.followup.send(
-                f"Fehler beim Abrufen des letzten Bildes: {str(e)}",
-                ephemeral=True
-            )
 
     def resize_image(self, input_file):
         """Verkleinert ein Bild, falls es größer als 10MB ist"""
