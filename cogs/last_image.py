@@ -79,5 +79,20 @@ class LastImage(commands.Cog):
             )
 
 async def setup(bot):
+    # Füge die Cog zum Bot hinzu
     await bot.add_cog(LastImage(bot))
-    print("LastImage-Command wurde registriert") 
+    
+    # Registriere die Commands für alle Guilds
+    for guild_id in bot.guild_ids:
+        try:
+            await bot.tree.sync(guild=discord.Object(id=guild_id))
+            print(f"LastImage-Command wurde für Guild {guild_id} registriert")
+        except Exception as e:
+            print(f"Fehler beim Registrieren des LastImage-Commands für Guild {guild_id}: {e}")
+    
+    # Registriere die Commands auch global
+    try:
+        await bot.tree.sync()
+        print("LastImage-Command wurde global registriert")
+    except Exception as e:
+        print(f"Fehler beim globalen Registrieren des LastImage-Commands: {e}") 

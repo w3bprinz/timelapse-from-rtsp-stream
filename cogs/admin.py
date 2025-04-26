@@ -63,5 +63,20 @@ class AdminCommands(commands.Cog):
             )
 
 async def setup(bot):
+    # Füge die Cog zum Bot hinzu
     await bot.add_cog(AdminCommands(bot))
-    print("Admin-Commands wurden registriert") 
+    
+    # Registriere die Commands für alle Guilds
+    for guild_id in bot.guild_ids:
+        try:
+            await bot.tree.sync(guild=discord.Object(id=guild_id))
+            print(f"Admin-Commands wurden für Guild {guild_id} registriert")
+        except Exception as e:
+            print(f"Fehler beim Registrieren der Admin-Commands für Guild {guild_id}: {e}")
+    
+    # Registriere die Commands auch global
+    try:
+        await bot.tree.sync()
+        print("Admin-Commands wurden global registriert")
+    except Exception as e:
+        print(f"Fehler beim globalen Registrieren der Admin-Commands: {e}") 

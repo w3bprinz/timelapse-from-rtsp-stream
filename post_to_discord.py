@@ -68,6 +68,9 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+# Füge die guild_ids als Attribut zum Bot hinzu
+bot.guild_ids = DISCORD_GUILD_IDS
+
 @bot.event
 async def on_ready():
     logger.info(f'Bot ist eingeloggt als {bot.user.name}')
@@ -102,8 +105,12 @@ async def load_cogs():
     for filename in os.listdir(cogs_dir):
         if filename.endswith('.py') and not filename.startswith('__'):
             try:
+                # Lade die Cog
                 await bot.load_extension(f'cogs.{filename[:-3]}')
                 logger.info(f"Erfolgreich geladen: cogs.{filename[:-3]}")
+                
+                # Warte kurz, damit die Commands registriert werden können
+                await asyncio.sleep(0.5)
             except Exception as e:
                 logger.error(f"Fehler beim Laden von cogs.{filename[:-3]}: {str(e)}")
                 logger.error(f"Details: {e.__class__.__name__}: {str(e)}")
@@ -195,7 +202,10 @@ def resize_image(input_file):
     return input_file
 
 async def main():
+    # Lade zuerst die Cogs
     await load_cogs()
+    
+    # Starte den Bot
     await bot.start(DISCORD_BOT_TOKEN)
 
 # Wenn das Skript direkt ausgeführt wird (nicht als Modul)
