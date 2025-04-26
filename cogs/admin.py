@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import asyncio
 
 class AdminCommands(commands.Cog):
     """Admin commands for the bot"""
@@ -23,15 +24,31 @@ class AdminCommands(commands.Cog):
                 )
                 return
 
+            total_deleted = 0
+            batch_size = 50  # Anzahl der Nachrichten pro Batch
+            
             if amount is None:
-                # Lösche alle Nachrichten
-                deleted = await interaction.channel.purge(limit=None)
+                # Lösche alle Nachrichten in Batches
+                while True:
+                    deleted = await interaction.channel.purge(limit=batch_size)
+                    total_deleted += len(deleted)
+                    if len(deleted) < batch_size:
+                        break
+                    await asyncio.sleep(1)  # Warte 1 Sekunde zwischen den Batches
             else:
-                # Lösche die angegebene Anzahl von Nachrichten
-                deleted = await interaction.channel.purge(limit=amount)
+                # Lösche die angegebene Anzahl von Nachrichten in Batches
+                remaining = amount
+                while remaining > 0:
+                    current_batch = min(batch_size, remaining)
+                    deleted = await interaction.channel.purge(limit=current_batch)
+                    total_deleted += len(deleted)
+                    remaining -= len(deleted)
+                    if len(deleted) < current_batch:
+                        break
+                    await asyncio.sleep(1)  # Warte 1 Sekunde zwischen den Batches
             
             await interaction.followup.send(
-                f"🧹 {len(deleted)} Nachrichten wurden gelöscht.",
+                f"🧹 {total_deleted} Nachrichten wurden gelöscht.",
                 ephemeral=True
             )
         except discord.Forbidden:
