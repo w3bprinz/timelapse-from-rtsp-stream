@@ -75,19 +75,13 @@ async def on_ready():
         # Warte kurz, damit die Cogs vollständig geladen sind
         await asyncio.sleep(1)
         
-        # Synchronisiere für jede Guild einzeln
-        for guild_id in DISCORD_GUILD_IDS:
-            guild = bot.get_guild(guild_id)
-            if guild:
-                logger.info(f"Synchronisiere Commands für Guild: {guild.name} ({guild.id})")
-                synced = await bot.tree.sync(guild=guild)
-                logger.info(f"Synchronisierte {len(synced)} Commands für {guild.name}")
-                
-                # Debug: Zeige die synchronisierten Commands
-                for cmd in synced:
-                    logger.info(f"- {cmd.name}")
-            else:
-                logger.warning(f"Guild mit ID {guild_id} nicht gefunden!")
+        # Synchronisiere Commands global
+        synced = await bot.tree.sync()
+        logger.info(f"Synchronisierte {len(synced)} Commands global")
+        
+        # Debug: Zeige die synchronisierten Commands
+        for cmd in synced:
+            logger.info(f"- {cmd.name}")
     except Exception as e:
         logger.error(f"Fehler beim Synchronisieren der Befehle: {e}")
 
