@@ -82,15 +82,7 @@ async def on_ready():
         bot.tree.clear_commands(guild=None)
         logger.info("Alle bestehenden Commands wurden entfernt")
         
-        # Registriere die Commands für alle Guilds
-        for guild_id in DISCORD_GUILD_IDS:
-            try:
-                await bot.tree.sync(guild=discord.Object(id=guild_id))
-                logger.info(f"Commands wurden für Guild {guild_id} registriert")
-            except Exception as e:
-                logger.error(f"Fehler beim Registrieren der Commands für Guild {guild_id}: {e}")
-        
-        # Registriere die Commands auch global
+        # Synchronisiere zuerst global
         try:
             synced = await bot.tree.sync()
             logger.info(f"Synchronisierte {len(synced)} Commands global")
@@ -100,6 +92,22 @@ async def on_ready():
                 logger.info(f"- {cmd.name}")
         except Exception as e:
             logger.error(f"Fehler beim globalen Synchronisieren der Commands: {e}")
+        
+        # Dann für die spezifischen Guilds
+        for guild_id in DISCORD_GUILD_IDS:
+            try:
+                # Entferne die Commands für diese Guild
+                bot.tree.clear_commands(guild=discord.Object(id=guild_id))
+                
+                # Synchronisiere die Commands für diese Guild
+                synced = await bot.tree.sync(guild=discord.Object(id=guild_id))
+                logger.info(f"Synchronisierte {len(synced)} Commands für Guild {guild_id}")
+                
+                # Debug: Zeige die synchronisierten Commands
+                for cmd in synced:
+                    logger.info(f"- {cmd.name} (Guild {guild_id})")
+            except Exception as e:
+                logger.error(f"Fehler beim Synchronisieren der Commands für Guild {guild_id}: {e}")
     except Exception as e:
         logger.error(f"Fehler beim Synchronisieren der Befehle: {e}")
 
