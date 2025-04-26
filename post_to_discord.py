@@ -10,6 +10,7 @@ import logging
 import discord
 from discord.ext import commands, tasks
 import glob
+from discord import app_commands
 
 # Grundlegende Logging-Konfiguration
 logging.basicConfig(
@@ -67,6 +68,7 @@ logger.info(f"Guild IDs: {DISCORD_GUILD_IDS}")
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
+bot.tree = app_commands.CommandTree(bot)
 
 # Füge die guild_ids als Attribut zum Bot hinzu
 bot.guild_ids = DISCORD_GUILD_IDS
@@ -79,14 +81,14 @@ async def on_ready():
         await asyncio.sleep(2)
         
         # Entferne zuerst alle bestehenden Commands
-        bot.tree.clear_commands(guild=None)
-        logger.info("Alle bestehenden Commands wurden entfernt")
+        """ bot.tree.clear_commands(guild=None)
+        logger.info("Alle bestehenden Commands wurden entfernt") """
         
         # Synchronisiere zuerst für die spezifischen Guilds
         for guild_id in DISCORD_GUILD_IDS:
             try:
                 # Entferne die Commands für diese Guild
-                bot.tree.clear_commands(guild=discord.Object(id=guild_id))
+                """ bot.tree.clear_commands(guild=discord.Object(id=guild_id)) """
                 
                 # Synchronisiere die Commands für diese Guild
                 synced = await bot.tree.sync(guild=discord.Object(id=guild_id))
