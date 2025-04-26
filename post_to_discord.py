@@ -33,7 +33,7 @@ load_dotenv(env_file)
 
 # Hole die Umgebungsvariablen
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
-DISCORD_CHANNEL_ID = os.getenv('DISCORD_CHANNEL_ID')
+DISCORD_TIMELAPSE_CHANNEL_ID = os.getenv('DISCORD_TIMELAPSE_CHANNEL_ID')
 DISCORD_DAILY_CHANNEL_ID = os.getenv('DISCORD_DAILY_CHANNEL_ID')
 DISCORD_GUILD_IDS = os.getenv('DISCORD_GUILD_IDS', '').split(',')  # Komma-separierte Liste von Guild IDs
 
@@ -41,8 +41,8 @@ DISCORD_GUILD_IDS = os.getenv('DISCORD_GUILD_IDS', '').split(',')  # Komma-separ
 if not DISCORD_BOT_TOKEN:
     logger.error("Fehler: DISCORD_BOT_TOKEN nicht gesetzt")
     sys.exit(1)
-if not DISCORD_CHANNEL_ID:
-    logger.error("Fehler: DISCORD_CHANNEL_ID nicht gesetzt")
+if not DISCORD_TIMELAPSE_CHANNEL_ID:
+    logger.error("Fehler: DISCORD_TIMELAPSE_CHANNEL_ID nicht gesetzt")
     sys.exit(1)
 if not DISCORD_DAILY_CHANNEL_ID:
     logger.error("Fehler: DISCORD_DAILY_CHANNEL_ID nicht gesetzt")
@@ -59,7 +59,7 @@ except ValueError as e:
     sys.exit(1)
 
 logger.info(f"Bot Token: {'*' * len(DISCORD_BOT_TOKEN)}")
-logger.info(f"Channel ID: {DISCORD_CHANNEL_ID}")
+logger.info(f"Timelapse Channel ID: {DISCORD_TIMELAPSE_CHANNEL_ID}")
 logger.info(f"Daily Channel ID: {DISCORD_DAILY_CHANNEL_ID}")
 logger.info(f"Guild IDs: {DISCORD_GUILD_IDS}")
 
@@ -250,9 +250,9 @@ if __name__ == "__main__":
         @client.event
         async def on_ready():
             try:
-                channel = client.get_channel(int(DISCORD_CHANNEL_ID))
+                channel = client.get_channel(int(DISCORD_TIMELAPSE_CHANNEL_ID))
                 if not channel:
-                    logger.error(f"Fehler: Kanal mit ID {DISCORD_CHANNEL_ID} nicht gefunden")
+                    logger.error(f"Fehler: Kanal mit ID {DISCORD_TIMELAPSE_CHANNEL_ID} nicht gefunden")
                     await client.close()
                     return
 

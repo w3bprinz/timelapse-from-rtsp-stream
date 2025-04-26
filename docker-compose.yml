@@ -6,8 +6,8 @@ services:
     restart: unless-stopped
     environment:
       - RTSP_URL=rtsp://username:password@ip:port/stream
-      - DISCORD_CHANNEL_ID=your_channel_id
       - DISCORD_BOT_TOKEN=your_bot_token
+      - DISCORD_TIMELAPSE_CHANNEL_ID=your_channel_id
       - SCREENSHOT_INTERVAL=300
       - SCREENSHOT_DIR=/app/screenshots
       - TIMELAPSE_DIR=/app/timelapse

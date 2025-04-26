@@ -26,7 +26,7 @@ cd timelapse-from-rtsp-stream
 
 ```env
 DISCORD_BOT_TOKEN=dein_bot_token
-DISCORD_CHANNEL_ID=dein_channel_id
+DISCORD_TIMELAPSE_CHANNEL_ID=dein_channel_id
 DISCORD_DAILY_CHANNEL_ID=daily_channel_id
 ```
 

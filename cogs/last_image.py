@@ -5,6 +5,11 @@ import os
 import glob
 from datetime import datetime
 import subprocess
+from dotenv import load_dotenv
+
+# Lade Umgebungsvariablen
+load_dotenv('/app/.env')
+DISCORD_GUILD_IDS = [int(guild_id.strip()) for guild_id in os.getenv('DISCORD_GUILD_IDS', '').split(',') if guild_id.strip()]
 
 class LastImage(commands.Cog):
     def __init__(self, bot):
@@ -39,6 +44,7 @@ class LastImage(commands.Cog):
         name="last",
         description="Zeigt das letzte aufgenommene Bild"
     )
+    @app_commands.guilds(*[discord.Object(id=guild_id) for guild_id in DISCORD_GUILD_IDS])
     async def last(self, interaction: discord.Interaction):
         await interaction.response.defer()
 

@@ -53,7 +53,7 @@ post_to_discord() {
     fi
     
     # Führe das Discord-Script mit vollem Python-Pfad aus
-    PYTHONPATH=/app DISCORD_CHANNEL_ID="$channel_id" /usr/local/bin/python3 /app/post_to_discord.py "$file_path" "$message"
+    PYTHONPATH=/app DISCORD_TIMELAPSE_CHANNEL_ID="$channel_id" /usr/local/bin/python3 /app/post_to_discord.py "$file_path" "$message"
     
     if [ $? -ne 0 ]; then
         echo "Fehler beim Posten in Discord"
@@ -143,7 +143,7 @@ create_timelapse() {
     local size_mb=$(du -m "$output_file" | cut -f1)
     if [ "$size_mb" -le "$MAX_VIDEO_SIZE_MB" ]; then
         # Sende das Video an Discord
-        post_to_discord "$output_file" "Timelapse Video vom $(date +"%Y-%m-%d")" "$DISCORD_CHANNEL_ID"
+        post_to_discord "$output_file" "Timelapse Video vom $(date +"%Y-%m-%d")" "$DISCORD_TIMELAPSE_CHANNEL_ID"
     else
         echo "Video ist zu groß ($size_mb MB) und wird nicht gesendet"
     fi

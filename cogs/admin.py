@@ -2,6 +2,12 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import asyncio
+from dotenv import load_dotenv
+import os
+
+# Lade Umgebungsvariablen
+load_dotenv('/app/.env')
+DISCORD_GUILD_IDS = [int(guild_id.strip()) for guild_id in os.getenv('DISCORD_GUILD_IDS', '').split(',') if guild_id.strip()]
 
 class AdminCommands(commands.Cog):
     """Admin commands for the bot"""
@@ -12,6 +18,7 @@ class AdminCommands(commands.Cog):
         name="purge",
         description="Löscht Nachrichten im aktuellen Channel"
     )
+    @app_commands.guilds(*[discord.Object(id=guild_id) for guild_id in DISCORD_GUILD_IDS])
     @app_commands.checks.has_permissions(administrator=True)
     async def purge(self, interaction: discord.Interaction, amount: int = None):
         try:
