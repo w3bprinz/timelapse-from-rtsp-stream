@@ -68,7 +68,6 @@ logger.info(f"Guild IDs: {DISCORD_GUILD_IDS}")
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
-bot.tree = app_commands.CommandTree(bot)
 
 # Füge die guild_ids als Attribut zum Bot hinzu
 bot.guild_ids = DISCORD_GUILD_IDS
